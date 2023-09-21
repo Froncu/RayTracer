@@ -27,15 +27,32 @@ void Renderer::Render(Scene* pScene) const
 	auto& materials = pScene->GetMaterials();
 	auto& lights = pScene->GetLights();
 
+	const float aspectRatio{ float(m_Width) / m_Height },
+				multiplierXValue{ 2.0f / m_Width },
+				multiplierYValue{ 2.0f / m_Height };
+
+	Vector3 rayDirection;
+
 	for (int px{}; px < m_Width; ++px)
 	{
+		const float valueX{ ((float(px) + 0.5f) * multiplierXValue - 1.0f) * aspectRatio };
+
 		for (int py{}; py < m_Height; ++py)
 		{
-			float gradient = px / static_cast<float>(m_Width);
-			gradient += py / static_cast<float>(m_Width);
-			gradient /= 2.0f;
+			rayDirection.x = valueX;
+			rayDirection.y = 1.0f - (float(py) + 0.5f) * multiplierYValue;
+			rayDirection.z = 1.0f;
+			rayDirection.Normalize();
 
-			ColorRGB finalColor{ gradient, gradient, gradient };
+			Ray viewRay{ {}, rayDirection };
+			HitRecord closestHit{};
+			ColorRGB finalColor{};
+			
+			pScene->GetClosestHit(viewRay, closestHit);
+			if (closestHit.didHit)
+			{
+				finalColor = materials[closestHit.materialIndex]->Shade();
+			}
 
 			//Update Color in Buffer
 			finalColor.MaxToOne();
