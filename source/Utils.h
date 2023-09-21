@@ -15,33 +15,28 @@ namespace dae
 			//todo W1
 			const Vector3 deltaOrigin{ ray.origin - sphere.origin };
 
-			const float	a{ Vector3::Dot(ray.direction, ray.direction) },
-						b{ Vector3::Dot(2 * ray.direction, deltaOrigin) },
+			const float	b{ Vector3::Dot(ray.direction, deltaOrigin) },
 						c{ Vector3::Dot(deltaOrigin, deltaOrigin) - sphere.radius * sphere.radius },
-						discriminant{ b * b - 4 * a * c };
+						discriminant{ b * b - c };
 
-			if (0 >= discriminant)
+			if (discriminant <= 0)
 				return false;
 
-			const float squareRootedDiscriminant{ sqrtf(discriminant) },
-						denominator{ 2.0f * a };
+			const float squareRootedDiscriminant{ sqrtf(discriminant) };
 
-			float t{ (-b - squareRootedDiscriminant) / denominator },
-				& tHitRecord{ hitRecord.t };
-			
-			if (t >= tHitRecord)
-				return false;
-
+			float t{ (-b - squareRootedDiscriminant) };
 			if (t < ray.min)
-				t = (-b + squareRootedDiscriminant) / denominator;
+				t = (-b + squareRootedDiscriminant);
 
-			if (t < ray.min)
+			if (t < ray.min && t > ray.max)
 				return false;
-			else if (t < ray.max)
+			else if (!ignoreHitRecord && t < hitRecord.t)
 			{
-				tHitRecord = t;
-				hitRecord.origin = ray.origin + ray.direction * tHitRecord;
+				hitRecord.t = t;
+
+				hitRecord.origin = ray.origin + hitRecord.t * ray.direction;
 				hitRecord.normal = (hitRecord.origin - sphere.origin) / sphere.radius;
+
 				hitRecord.didHit = true;
 				hitRecord.materialIndex = sphere.materialIndex;
 				return true;
@@ -63,13 +58,15 @@ namespace dae
 			float t{ Vector3::Dot(plane.origin - ray.origin, plane.normal) / Vector3::Dot(ray.direction, plane.normal) },
 				& tHitRecord{ hitRecord.t };
 
-			if (t > tHitRecord)
+			if (t > hitRecord.t)
 				return false;
 			else if (t > ray.min && t < ray.max)
 			{
-				tHitRecord = t;
-				hitRecord.origin = ray.origin + ray.direction * tHitRecord;
+				hitRecord.t = t;
+
+				hitRecord.origin = ray.origin + hitRecord.t * ray.direction;
 				hitRecord.normal = plane.normal;
+
 				hitRecord.didHit = true;
 				hitRecord.materialIndex = plane.materialIndex;
 				return true;

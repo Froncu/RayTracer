@@ -33,31 +33,30 @@ void Renderer::Render(Scene* pScene) const
 
 	Vector3 rayDirection;
 
-	for (int px{}; px < m_Width; ++px)
+	rayDirection.z = 1.0f;
+
+	for (float px{ 0.5f }; px < m_Width; ++px)
 	{
-		const float valueX{ ((float(px) + 0.5f) * multiplierXValue - 1.0f) * aspectRatio };
+		rayDirection.x = (px * multiplierXValue - 1.0f) * aspectRatio;
 
-		for (int py{}; py < m_Height; ++py)
+		for (float py{ 0.5f }; py < m_Height; ++py)
 		{
-			rayDirection.x = valueX;
-			rayDirection.y = 1.0f - (float(py) + 0.5f) * multiplierYValue;
-			rayDirection.z = 1.0f;
-			rayDirection.Normalize();
+			rayDirection.y = 1.0f - py * multiplierYValue;
 
-			Ray viewRay{ {}, rayDirection };
+			Ray viewRay{ {}, rayDirection.Normalized() };
 			HitRecord closestHit{};
-			ColorRGB finalColor{};
+			ColorRGB finalColor;
 			
 			pScene->GetClosestHit(viewRay, closestHit);
 			if (closestHit.didHit)
-			{
 				finalColor = materials[closestHit.materialIndex]->Shade();
-			}
+			else
+				finalColor = {};
 
 			//Update Color in Buffer
 			finalColor.MaxToOne();
 
-			m_pBufferPixels[px + (py * m_Width)] = SDL_MapRGB(m_pBuffer->format,
+			m_pBufferPixels[int(px) + (int(py) * m_Width)] = SDL_MapRGB(m_pBuffer->format,
 				static_cast<uint8_t>(finalColor.r * 255),
 				static_cast<uint8_t>(finalColor.g * 255),
 				static_cast<uint8_t>(finalColor.b * 255));
