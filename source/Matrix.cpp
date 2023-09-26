@@ -104,9 +104,15 @@ namespace dae {
 
 	Matrix Matrix::CreateTranslation(float x, float y, float z)
 	{
-		//todo W2
-		assert(false && "Not Implemented Yet");
-		return {};
+		//todo W2	
+		return 
+			Matrix
+			(
+				Vector4(1, 0, 0, 0),
+				Vector4(0, 1, 0, 0),
+				Vector4(0, 0, 1, 0), 
+				Vector4(x, y, z, 1)
+			);
 	}
 
 	Matrix Matrix::CreateTranslation(const Vector3& t)
@@ -117,29 +123,59 @@ namespace dae {
 	Matrix Matrix::CreateRotationX(float pitch)
 	{
 		//todo W2
-		assert(false && "Not Implemented Yet");
-		return {};
+		const float cosine{ cosf(pitch) },
+					sine{ sinf(pitch) };
+			
+		return
+			Matrix
+			(
+				Vector4(1,		0,		0,		0),
+				Vector4(0,		cosine,	sine,	0),
+				Vector4(0,		-sine,	cosine,	0),
+				Vector4(0,		0,		0,		1)
+			);
 	}
 
 	Matrix Matrix::CreateRotationY(float yaw)
 	{
 		//todo W2
-		assert(false && "Not Implemented Yet");
-		return {};
+		const float cosine{ cosf(yaw) },
+					sine{ sinf(yaw) };
+
+		return
+			Matrix
+			(
+				Vector4(cosine, 0,		-sine,	0),
+				Vector4(0,		1,		0,		0),
+				Vector4(sine,	0,		cosine, 0),
+				Vector4(0,		0,		0,		1)
+			);
 	}
 
 	Matrix Matrix::CreateRotationZ(float roll)
 	{
 		//todo W2
-		assert(false && "Not Implemented Yet");
-		return {};
+		const float cosine{ cosf(roll) },
+					sine{ sinf(roll) };
+
+		return
+			Matrix
+			(
+				Vector4(cosine, sine,	0,		0),
+				Vector4(-sine,	cosine, 0,		0),
+				Vector4(0,		0,		1,		0),
+				Vector4(0,		0,		0,		1)
+			);
+
 	}
 
 	Matrix Matrix::CreateRotation(const Vector3& r)
 	{
 		//todo W2
-		assert(false && "Not Implemented Yet");
-		return {};
+		return
+			Matrix::CreateRotationZ(r.z) *
+			Matrix::CreateRotationY(r.y) *
+			Matrix::CreateRotationX(r.x);
 	}
 
 	Matrix Matrix::CreateRotation(float pitch, float yaw, float roll)
@@ -150,8 +186,14 @@ namespace dae {
 	Matrix Matrix::CreateScale(float sx, float sy, float sz)
 	{
 		//todo W2
-		assert(false && "Not Implemented Yet");
-		return {};
+		return
+			Matrix
+			(
+				Vector4(sx, 0,	0,	0),
+				Vector4(0,	sy, 0,	0),
+				Vector4(0,	0,	sz, 0),
+				Vector4(0,	0,	0,	1)
+			);
 	}
 
 	Matrix Matrix::CreateScale(const Vector3& s)

@@ -28,6 +28,7 @@ void Renderer::Render(Scene* pScene) const
 	auto& lights = pScene->GetLights();
 
 	const float aspectRatio{ float(m_Width) / m_Height },
+				fieldOfView{ tanf(dae::TO_RADIANS * camera.fovAngle / 2.0f) },
 				multiplierXValue{ 2.0f / m_Width },
 				multiplierYValue{ 2.0f / m_Height };
 
@@ -37,19 +38,33 @@ void Renderer::Render(Scene* pScene) const
 
 	for (float px{ 0.5f }; px < m_Width; ++px)
 	{
-		rayDirection.x = (px * multiplierXValue - 1.0f) * aspectRatio;
+		rayDirection.x = (px * multiplierXValue - 1.0f) * aspectRatio * fieldOfView;
 
 		for (float py{ 0.5f }; py < m_Height; ++py)
 		{
-			rayDirection.y = 1.0f - py * multiplierYValue;
+			rayDirection.y = (1.0f - py * multiplierYValue) * fieldOfView;
 
-			Ray viewRay{ {}, rayDirection.Normalized() };
+			Matrix cameraToWorld{ camera.CalculateCameraToWorld() };
+			Ray viewRay{ camera.origin, cameraToWorld.TransformVector(rayDirection.Normalized()) };
 			HitRecord closestHit{};
 			ColorRGB finalColor;
 			
 			pScene->GetClosestHit(viewRay, closestHit);
 			if (closestHit.didHit)
-				finalColor = materials[closestHit.materialIndex]->Shade();
+			{
+				float colorScalar{ 1.0f };
+				for (const Light& light : lights)
+				{
+					const Vector3 lightVector{ dae::LightUtils::GetDirectionToLight(light, closestHit.origin) };
+					Ray lightRay{ closestHit.origin, lightVector.Normalized() };
+					lightRay.max = lightVector.Magnitude();
+
+					if (pScene->DoesHit(lightRay))
+						colorScalar = 0.8f;
+				}
+
+				finalColor = colorScalar * materials[closestHit.materialIndex]->Shade();
+			}
 			else
 				finalColor = {};
 

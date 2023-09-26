@@ -28,7 +28,7 @@ namespace dae
 			if (t < ray.min)
 				t = (-b + squareRootedDiscriminant);
 
-			if (t < ray.min && t > ray.max)
+			if (t < ray.min || t > ray.max)
 				return false;
 			else if (!ignoreHitRecord && t < hitRecord.t)
 			{
@@ -55,8 +55,7 @@ namespace dae
 		inline bool HitTest_Plane(const Plane& plane, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
 			//todo W1
-			float t{ Vector3::Dot(plane.origin - ray.origin, plane.normal) / Vector3::Dot(ray.direction, plane.normal) },
-				& tHitRecord{ hitRecord.t };
+			float t{ Vector3::Dot(plane.origin - ray.origin, plane.normal) / Vector3::Dot(ray.direction, plane.normal) };
 
 			if (t > hitRecord.t)
 				return false;
@@ -117,8 +116,8 @@ namespace dae
 		inline Vector3 GetDirectionToLight(const Light& light, const Vector3 origin)
 		{
 			//todo W3
-			assert(false && "No Implemented Yet!");
-			return {};
+			return 
+				light.origin - origin;
 		}
 
 		inline ColorRGB GetRadiance(const Light& light, const Vector3& target)
