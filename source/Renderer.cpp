@@ -27,46 +27,52 @@ void Renderer::Render(Scene* pScene) const
 	auto& materials = pScene->GetMaterials();
 	auto& lights = pScene->GetLights();
 
-	const float aspectRatio{ float(m_Width) / m_Height },
-				fieldOfView{ tanf(dae::TO_RADIANS * camera.fovAngle / 2.0f) },
-				multiplierXValue{ 2.0f / m_Width },
-				multiplierYValue{ 2.0f / m_Height };
+	const float
+		fieldOfViewValue{ camera.GetFieldOfViewValue() },
+		aspectRatioTimesFieldOfViewValue{ float(m_Width) / m_Height * fieldOfViewValue },
+		multiplierXValue{ 2.0f / m_Width },
+		multiplierYValue{ 2.0f / m_Height },
+		shadowScalar{ 0.6f };
 
 	Vector3 rayDirection;
+	Matrix cameraToWorld{ camera.CalculateCameraToWorld() };
+	Ray viewRay{ camera.origin };
+	ColorRGB finalColor;
 
 	rayDirection.z = 1.0f;
 
 	for (float px{ 0.5f }; px < m_Width; ++px)
 	{
-		rayDirection.x = (px * multiplierXValue - 1.0f) * aspectRatio * fieldOfView;
+		rayDirection.x = (px * multiplierXValue - 1.0f) * aspectRatioTimesFieldOfViewValue;
 
 		for (float py{ 0.5f }; py < m_Height; ++py)
 		{
-			rayDirection.y = (1.0f - py * multiplierYValue) * fieldOfView;
+			rayDirection.y = (1.0f - py * multiplierYValue) * fieldOfViewValue;
 
-			Matrix cameraToWorld{ camera.CalculateCameraToWorld() };
-			Ray viewRay{ camera.origin, cameraToWorld.TransformVector(rayDirection.Normalized()) };
-			HitRecord closestHit{};
-			ColorRGB finalColor;
+			viewRay.direction = cameraToWorld.TransformVector(rayDirection.Normalized());
 			
+			HitRecord closestHit;
 			pScene->GetClosestHit(viewRay, closestHit);
 			if (closestHit.didHit)
 			{
 				float colorScalar{ 1.0f };
 				for (const Light& light : lights)
 				{
-					const Vector3 lightVector{ dae::LightUtils::GetDirectionToLight(light, closestHit.origin) };
-					Ray lightRay{ closestHit.origin, lightVector.Normalized() };
+					const Vector3
+						lightVector{ dae::LightUtils::GetDirectionToLight(light, closestHit.origin) },
+						lightVectorNormalized{ lightVector.Normalized() };
+
+					Ray lightRay{ closestHit.origin + DEFAULT_RAY_MIN * lightVectorNormalized, lightVectorNormalized };
 					lightRay.max = lightVector.Magnitude();
 
 					if (pScene->DoesHit(lightRay))
-						colorScalar = 0.8f;
+						colorScalar *= shadowScalar;
 				}
 
 				finalColor = colorScalar * materials[closestHit.materialIndex]->Shade();
 			}
 			else
-				finalColor = {};
+				finalColor = ColorRGB();
 
 			//Update Color in Buffer
 			finalColor.MaxToOne();

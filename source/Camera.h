@@ -10,6 +10,7 @@ namespace dae
 {
 	struct Camera
 	{
+	public:
 		Camera() = default;
 
 		Camera(const Vector3& _origin, float _fovAngle):
@@ -18,13 +19,12 @@ namespace dae
 		{
 		}
 
-
 		Vector3 origin{};
-		float fovAngle{90.f};
 
 		Vector3 forward{Vector3::UnitZ};
 		Vector3 up{Vector3::UnitY};
 		Vector3 right{Vector3::UnitX};
+		Vector3 movingDirection{};
 
 		float totalPitch{0.f};
 		float totalYaw{0.f};
@@ -68,10 +68,10 @@ namespace dae
 			if (pKeyboardState[SDL_SCANCODE_S])
 				origin -= MOVEMENT_SPEED * forward * deltaTime;
 
-			if(pKeyboardState[SDL_SCANCODE_A])
+			if (pKeyboardState[SDL_SCANCODE_A])
 				origin -= MOVEMENT_SPEED * right * deltaTime;
 
-			if(pKeyboardState[SDL_SCANCODE_D])
+			if (pKeyboardState[SDL_SCANCODE_D])
 				origin += MOVEMENT_SPEED * right * deltaTime;
 
 			//Mouse Input
@@ -92,7 +92,28 @@ namespace dae
 			}
 
 			//todo: W2
-			forward = Matrix(Matrix::CreateRotationX(totalPitch) * Matrix::CreateRotationY(totalYaw)).TransformVector(Vector3::UnitZ).Normalized();
+			forward = Matrix(Matrix::CreateRotationX(totalPitch) * Matrix::CreateRotationY(totalYaw)).TransformVector(Vector3::UnitZ);
 		}
+		
+		void SetFieldOfViewAngle(float angle)
+		{
+			fovAngle = angle;
+			fovValue = tanf(dae::TO_RADIANS * fovAngle / 2.0f);
+		}
+		
+		void IncrementFieldOfViewAngle(float angle)
+		{
+			SetFieldOfViewAngle(fovAngle + angle);
+		}
+		
+		float GetFieldOfViewValue() const
+		{
+			return fovValue;
+		}
+
+	private:
+		float
+			fovAngle{ 90.f },
+			fovValue{ tanf(dae::TO_RADIANS * fovAngle / 2.0f) };
 	};
 }

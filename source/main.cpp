@@ -69,9 +69,14 @@ int main(int argc, char* args[])
 			case SDL_QUIT:
 				isLooping = false;
 				break;
+
 			case SDL_KEYUP:
 				if(e.key.keysym.scancode == SDL_SCANCODE_X)
 					takeScreenshot = true;
+				break;
+
+			case SDL_MOUSEWHEEL:
+				pScene->GetCamera().IncrementFieldOfViewAngle(-e.wheel.y);
 				break;
 			}
 		}

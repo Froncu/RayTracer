@@ -15,9 +15,10 @@ namespace dae
 			//todo W1
 			const Vector3 deltaOrigin{ ray.origin - sphere.origin };
 
-			const float	b{ Vector3::Dot(ray.direction, deltaOrigin) },
-						c{ Vector3::Dot(deltaOrigin, deltaOrigin) - sphere.radius * sphere.radius },
-						discriminant{ b * b - c };
+			const float
+				b{ Vector3::Dot(ray.direction, deltaOrigin) },
+				c{ Vector3::Dot(deltaOrigin, deltaOrigin) - sphere.radius * sphere.radius },
+				discriminant{ b * b - c };
 
 			if (discriminant <= 0)
 				return false;
@@ -30,7 +31,11 @@ namespace dae
 
 			if (t < ray.min || t > ray.max)
 				return false;
-			else if (!ignoreHitRecord && t < hitRecord.t)
+
+			if (ignoreHitRecord)
+				return true;
+			
+			if (t < hitRecord.t)
 			{
 				hitRecord.t = t;
 
@@ -41,12 +46,13 @@ namespace dae
 				hitRecord.materialIndex = sphere.materialIndex;
 				return true;
 			}
+
 			return false;
 		}
 
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray)
 		{
-			HitRecord temp{};
+			HitRecord temp;
 			return HitTest_Sphere(sphere, ray, temp, true);
 		}
 #pragma endregion
@@ -55,11 +61,15 @@ namespace dae
 		inline bool HitTest_Plane(const Plane& plane, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
 			//todo W1
-			float t{ Vector3::Dot(plane.origin - ray.origin, plane.normal) / Vector3::Dot(ray.direction, plane.normal) };
+			const float t{ Vector3::Dot(plane.origin - ray.origin, plane.normal) / Vector3::Dot(ray.direction, plane.normal) };
 
-			if (t > hitRecord.t)
+			if (t < ray.min || t > ray.max)
 				return false;
-			else if (t > ray.min && t < ray.max)
+			
+			if (ignoreHitRecord)
+				return true;
+
+			if (t < hitRecord.t)
 			{
 				hitRecord.t = t;
 
@@ -70,12 +80,13 @@ namespace dae
 				hitRecord.materialIndex = plane.materialIndex;
 				return true;
 			}
+
 			return false;
 		}
 
 		inline bool HitTest_Plane(const Plane& plane, const Ray& ray)
 		{
-			HitRecord temp{};
+			HitRecord temp;
 			return HitTest_Plane(plane, ray, temp, true);
 		}
 #pragma endregion

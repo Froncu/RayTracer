@@ -158,12 +158,14 @@ namespace dae
 	};
 #pragma endregion
 #pragma region MISC
+	const float DEFAULT_RAY_MIN{ 0.001f };
+
 	struct Ray
 	{
 		Vector3 origin{};
 		Vector3 direction{};
 
-		float min{ 0.0001f };
+		float min{ DEFAULT_RAY_MIN };
 		float max{ FLT_MAX };
 	};
 

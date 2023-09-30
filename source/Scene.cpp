@@ -39,14 +39,12 @@ namespace dae {
 	bool Scene::DoesHit(const Ray& ray) const
 	{
 		//todo W3
-		HitRecord closestHit;
-
 		for (const Sphere& sphere : m_SphereGeometries)
-			if (GeometryUtils::HitTest_Sphere(sphere, ray, closestHit))
+			if (GeometryUtils::HitTest_Sphere(sphere, ray))
 				return true;
 
 		for (const Plane& plane : m_PlaneGeometries)
-			if (GeometryUtils::HitTest_Plane(plane, ray, closestHit))
+			if (GeometryUtils::HitTest_Plane(plane, ray))
 				return true;
 
 		return false;
@@ -143,7 +141,7 @@ namespace dae {
 	void Scene_W2::Initialize()
 	{
 		m_Camera.origin = Vector3(0.f, 3.f, -9.f);
-		m_Camera.fovAngle = 45.f;
+		m_Camera.SetFieldOfViewAngle(45.f);
 
 		//default: Material id0 >> SolidColor Material (RED)
 		constexpr unsigned char matId_Solid_Red = 0;
