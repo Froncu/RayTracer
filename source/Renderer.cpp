@@ -31,13 +31,43 @@ void Renderer::Render(Scene* pScene) const
 		fieldOfViewValue{ camera.GetFieldOfViewValue() },
 		aspectRatioTimesFieldOfViewValue{ float(m_Width) / m_Height * fieldOfViewValue },
 		multiplierXValue{ 2.0f / m_Width },
-		multiplierYValue{ 2.0f / m_Height },
-		shadowScalar{ 0.6f };
+		multiplierYValue{ 2.0f / m_Height };
 
 	Vector3 rayDirection;
 	Matrix cameraToWorld{ camera.CalculateCameraToWorld() };
 	Ray viewRay{ camera.origin };
-	ColorRGB finalColor;
+
+	bool
+		showObservedArea,
+		showRadiance,
+		showBRDF;
+
+	switch (m_LightingMode)
+	{
+	case dae::Renderer::LightingMode::observedArea:
+		showObservedArea = true;
+		showRadiance = false;
+		showBRDF = false;
+		break;
+
+	case dae::Renderer::LightingMode::radiance:
+		showObservedArea = false;
+		showRadiance = true;
+		showBRDF = false;
+		break;
+
+	case dae::Renderer::LightingMode::BRDF:
+		showObservedArea = false;
+		showRadiance = false;
+		showBRDF = true;
+		break;
+
+	case dae::Renderer::LightingMode::combined:
+		showObservedArea = true;
+		showRadiance = true;
+		showBRDF = true;
+		break;
+	}
 
 	rayDirection.z = 1.0f;
 
@@ -52,10 +82,10 @@ void Renderer::Render(Scene* pScene) const
 			viewRay.direction = cameraToWorld.TransformVector(rayDirection.Normalized());
 			
 			HitRecord closestHit;
+			ColorRGB finalColor{};
 			pScene->GetClosestHit(viewRay, closestHit);
 			if (closestHit.didHit)
 			{
-				float colorScalar{ 1.0f };
 				for (const Light& light : lights)
 				{
 					const Vector3
@@ -65,14 +95,17 @@ void Renderer::Render(Scene* pScene) const
 					Ray lightRay{ closestHit.origin + DEFAULT_RAY_MIN * lightVectorNormalized, lightVectorNormalized };
 					lightRay.max = lightVector.Magnitude();
 
-					if (pScene->DoesHit(lightRay))
-						colorScalar *= shadowScalar;
-				}
+					if (m_ShowShadows && pScene->DoesHit(lightRay))
+						continue;
 
-				finalColor = colorScalar * materials[closestHit.materialIndex]->Shade();
+					const float dotLightDirectionNormal{ std::max(Vector3::Dot(lightRay.direction, closestHit.normal), 0.0f) };
+
+					finalColor += 
+						colors::White * (showObservedArea ? dotLightDirectionNormal : 1.0f) *
+						(showRadiance ? LightUtils::GetRadiance(light, closestHit.origin) : colors::White) *
+						(showBRDF ? materials[closestHit.materialIndex]->Shade(closestHit, lightRay.direction, viewRay.direction) : colors::White);
+				}
 			}
-			else
-				finalColor = ColorRGB();
 
 			//Update Color in Buffer
 			finalColor.MaxToOne();
@@ -92,4 +125,14 @@ void Renderer::Render(Scene* pScene) const
 bool Renderer::SaveBufferToImage() const
 {
 	return SDL_SaveBMP(m_pBuffer, "RayTracing_Buffer.bmp");
+}
+
+void Renderer::CycleLightingMode()
+{
+	m_LightingMode = LightingMode((int(m_LightingMode) + 1) % int(LightingMode::AMOUNT));
+}
+
+void Renderer::ToggleShadows()
+{
+	m_ShowShadows = !m_ShowShadows;
 }
