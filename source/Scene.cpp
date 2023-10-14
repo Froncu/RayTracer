@@ -140,7 +140,7 @@ namespace dae {
 
 	void Scene_W2::Initialize()
 	{
-		m_Camera.origin = Vector3(0.f, 3.f, -9.f);
+		m_Camera.SetOrigin({ 0.f, 3.f, -9.f });
 		m_Camera.SetFieldOfViewAngle(45.f);
 
 		//default: Material id0 >> SolidColor Material (RED)
@@ -173,7 +173,7 @@ namespace dae {
 	void Scene_W3::Initialize()
 	{
 		sceneName = "Week 3";
-		m_Camera.origin = { 0,3,-9 };
+		m_Camera.SetOrigin({ 0,3,-9 });
 		m_Camera.SetFieldOfViewAngle(45.f);
 
 		const auto matCT_GrayRoughMetal = AddMaterial(new Material_CookTorrence({ .972f, .960f, .915f }, 1.f, 1.f));

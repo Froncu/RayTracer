@@ -39,7 +39,11 @@ namespace dae
 
 		LightingMode m_LightingMode{ LightingMode::combined };
 
-		bool m_ShowShadows{ true };
+		bool
+			m_ShowObservedArea{ true },
+			m_ShowRadiance{ true },
+			m_ShowBRDF{ true },
+			m_ShowShadows{ true };
 
 		SDL_Window* m_pWindow{};
 

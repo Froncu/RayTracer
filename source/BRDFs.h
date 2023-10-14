@@ -36,8 +36,10 @@ namespace dae
 		static ColorRGB Phong(float ks, float exp, const Vector3& l, const Vector3& v, const Vector3& n)
 		{
 			//todo: W3
-			const Vector3 r{ -l + 2.0f * Vector3::Dot(n, l) * n };
-			const float dotrv{ std::max(Vector3::Dot(r, v), 0.0f) };
+			const Vector3 r{ l - 2.0f * Vector3::Dot(n, l) * n };
+			const float dotrv{ Vector3::Dot(r, -v) };
+			if (dotrv <= 0.0f)
+				return colors::Black;
 
 			return colors::White * ks * powf(dotrv, exp);
 		}
@@ -52,7 +54,8 @@ namespace dae
 		static ColorRGB FresnelFunction_Schlick(const Vector3& h, const Vector3& v, const ColorRGB& f0)
 		{
 			//todo: W3
-			return f0 + (colors::White - f0) * powf(1.0f - Vector3::Dot(h, v), 5.0f);
+			const float inverseDothv{ 1.0f - Vector3::Dot(h, v) };
+			return f0 + (colors::White - f0) * inverseDothv * inverseDothv * inverseDothv * inverseDothv * inverseDothv;
 		}
 
 		/**
@@ -65,8 +68,12 @@ namespace dae
 		static float NormalDistribution_GGX(const Vector3& n, const Vector3& h, float roughness)
 		{
 			//todo: W3
-			const float a{ powf(roughness, 4.0f) };
-			return a / (float(M_PI) * powf(powf(Vector3::Dot(n, h), 2.0f) * (a - 1.0f) + 1.0f, 2.0f));
+			const float
+				aSquared{ roughness * roughness * roughness * roughness },
+				dotnh{ Vector3::Dot(n, h) },
+				denominator{ dotnh * dotnh * (aSquared - 1.0f) + 1.0f };
+
+			return aSquared / (float(M_PI) * denominator * denominator);
 		}
 
 
@@ -80,9 +87,13 @@ namespace dae
 		static float GeometryFunction_SchlickGGX(const Vector3& n, const Vector3& v, float roughness)
 		{
 			//todo: W3
+			const float dotnv{ Vector3::Dot(n, v) };
+			if (dotnv <= 0.0f)
+				return 0.0f;
+
 			const float
-				dotnv{ std::max(Vector3::Dot(n, v), 0.0f) },
-				k{ powf(powf(roughness, 2.0f) + 1.0f, 2.0f) / 8.0f };
+				nominatorRooted{ roughness * roughness + 1.0f },
+				k{ nominatorRooted * nominatorRooted * 0.125f };
 			return dotnv / (dotnv * (1.0f - k) + k);
 		}
 

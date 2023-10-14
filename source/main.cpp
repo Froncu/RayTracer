@@ -41,6 +41,8 @@ int main(int argc, char* args[])
 	if (!pWindow)
 		return 1;
 
+	SDL_SetRelativeMouseMode(SDL_bool(true));
+
 	//Initialize "framework"
 	const auto pTimer = new Timer();
 	const auto pRenderer = new Renderer(pWindow);
@@ -52,9 +54,6 @@ int main(int argc, char* args[])
 
 	//Start loop
 	pTimer->Start();
-
-	// Start Benchmark
-	// pTimer->StartBenchmark();
 
 	float printTimer = 0.f;
 	bool isLooping = true;
@@ -85,11 +84,15 @@ int main(int argc, char* args[])
 				case SDL_SCANCODE_F3:
 					pRenderer->CycleLightingMode();
 					break;
+
+				case SDL_SCANCODE_F6:
+					pTimer->StartBenchmark();
+					break;
 				}
 				break;
 
 			case SDL_MOUSEWHEEL:
-				pScene->GetCamera().IncrementFieldOfViewAngle(-float(e.wheel.y));
+				pScene->GetCamera().IncrementFieldOfViewAngle(4.0f * -float(e.wheel.y));
 				break;
 			}
 		}

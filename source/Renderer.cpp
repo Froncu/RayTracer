@@ -37,38 +37,6 @@ void Renderer::Render(Scene* pScene) const
 	Matrix cameraToWorld{ camera.CalculateCameraToWorld() };
 	Ray viewRay{ camera.origin };
 
-	bool
-		showObservedArea,
-		showRadiance,
-		showBRDF;
-
-	switch (m_LightingMode)
-	{
-	case dae::Renderer::LightingMode::observedArea:
-		showObservedArea = true;
-		showRadiance = false;
-		showBRDF = false;
-		break;
-
-	case dae::Renderer::LightingMode::radiance:
-		showObservedArea = false;
-		showRadiance = true;
-		showBRDF = false;
-		break;
-
-	case dae::Renderer::LightingMode::BRDF:
-		showObservedArea = false;
-		showRadiance = false;
-		showBRDF = true;
-		break;
-
-	case dae::Renderer::LightingMode::combined:
-		showObservedArea = true;
-		showRadiance = true;
-		showBRDF = true;
-		break;
-	}
-
 	rayDirection.z = 1.0f;
 
 	for (float px{ 0.5f }; px < m_Width; ++px)
@@ -88,12 +56,12 @@ void Renderer::Render(Scene* pScene) const
 			{
 				for (const Light& light : lights)
 				{
-					const Vector3
-						lightVector{ dae::LightUtils::GetDirectionToLight(light, closestHit.origin) },
-						lightVectorNormalized{ lightVector.Normalized() };
+					const Vector3 lightVector{ dae::LightUtils::GetDirectionToLight(light, closestHit.origin) };
+					const float lightVectorMagnitude{ lightVector.Magnitude() };
+					const Vector3 lightVectorNormalized{ lightVector / lightVectorMagnitude };
 
 					Ray lightRay{ closestHit.origin + DEFAULT_RAY_MIN * lightVectorNormalized, lightVectorNormalized };
-					lightRay.max = lightVector.Magnitude();
+					lightRay.max = lightVectorMagnitude;
 
 					if (m_ShowShadows && pScene->DoesHit(lightRay))
 						continue;
@@ -101,9 +69,9 @@ void Renderer::Render(Scene* pScene) const
 					const float dotLightDirectionNormal{ std::max(Vector3::Dot(lightRay.direction, closestHit.normal), 0.0f) };
 
 					finalColor += 
-						colors::White * (showObservedArea ? dotLightDirectionNormal : 1.0f) *
-						(showRadiance ? LightUtils::GetRadiance(light, closestHit.origin) : colors::White) *
-						(showBRDF ? materials[closestHit.materialIndex]->Shade(closestHit, lightRay.direction, viewRay.direction) : colors::White);
+						(m_ShowObservedArea ? dotLightDirectionNormal : 1.0f) * colors::White *
+						(m_ShowRadiance ? LightUtils::GetRadiance(light, closestHit.origin) : colors::White) *
+						(m_ShowBRDF ? materials[closestHit.materialIndex]->Shade(closestHit, lightRay.direction, viewRay.direction) : colors::White);
 				}
 			}
 
@@ -130,6 +98,33 @@ bool Renderer::SaveBufferToImage() const
 void Renderer::CycleLightingMode()
 {
 	m_LightingMode = LightingMode((int(m_LightingMode) + 1) % int(LightingMode::AMOUNT));
+
+	switch (m_LightingMode)
+	{
+	case dae::Renderer::LightingMode::observedArea:
+		m_ShowObservedArea = true;
+		m_ShowRadiance = false;
+		m_ShowBRDF = false;
+		break;
+
+	case dae::Renderer::LightingMode::radiance:
+		m_ShowObservedArea = false;
+		m_ShowRadiance = true;
+		m_ShowBRDF = false;
+		break;
+
+	case dae::Renderer::LightingMode::BRDF:
+		m_ShowObservedArea = false;
+		m_ShowRadiance = false;
+		m_ShowBRDF = true;
+		break;
+
+	case dae::Renderer::LightingMode::combined:
+		m_ShowObservedArea = true;
+		m_ShowRadiance = true;
+		m_ShowBRDF = true;
+		break;
+	}
 }
 
 void Renderer::ToggleShadows()

@@ -5,6 +5,7 @@
 
 #include "Math.h"
 #include "Timer.h"
+#include <iostream>
 
 namespace dae
 {
@@ -15,7 +16,10 @@ namespace dae
 
 		Camera(const Vector3& _origin, float _fovAngle):
 			origin{_origin},
-			fovAngle{_fovAngle}
+			fovAngle{_fovAngle},
+
+			targetOrigin{ origin },
+			targetfovAngle{ fovAngle }
 		{
 		}
 
@@ -31,6 +35,13 @@ namespace dae
 
 		Matrix cameraToWorld{};
 
+		const float smoothFactor{ 0.25f };
+
+		Vector3 targetOrigin{ origin };
+
+		float
+			targetYaw{ totalPitch },
+			targetPitch{ totalYaw };
 
 		Matrix CalculateCameraToWorld()
 		{
@@ -54,25 +65,30 @@ namespace dae
 		void Update(Timer* pTimer)
 		{
 			static const float
-				MOVEMENT_SPEED{ 10.0f },
-				ROTATION_SPEED{ 0.25f };
+				MOVEMENT_SPEED{ 15.0f },
+				ROTATION_SPEED{ 0.25f },
+				MAX_TOTAL_PITCH{ float(M_PI) / 2.0f - 0.0001f },
+				DEFAULT_FOV_ANGLE{ 45.0f };
 
-			const float deltaTime = pTimer->GetElapsed();
+			const float 
+				deltaTime = pTimer->GetElapsed(),
+				fovScalar{ std::min(fovAngle / DEFAULT_FOV_ANGLE, 1.0f) };
+
 
 			//Keyboard Input
 			const uint8_t* pKeyboardState = SDL_GetKeyboardState(nullptr);
 
 			if (pKeyboardState[SDL_SCANCODE_W])
-				origin += MOVEMENT_SPEED * forward * deltaTime;
+				targetOrigin += MOVEMENT_SPEED * forward * deltaTime;
 
 			if (pKeyboardState[SDL_SCANCODE_S])
-				origin -= MOVEMENT_SPEED * forward * deltaTime;
+				targetOrigin -= MOVEMENT_SPEED * forward * deltaTime;
 
 			if (pKeyboardState[SDL_SCANCODE_A])
-				origin -= MOVEMENT_SPEED * right * deltaTime;
+				targetOrigin -= MOVEMENT_SPEED * right * deltaTime;
 
 			if (pKeyboardState[SDL_SCANCODE_D])
-				origin += MOVEMENT_SPEED * right * deltaTime;
+				targetOrigin += MOVEMENT_SPEED * right * deltaTime;
 
 			//Mouse Input
 			int mouseX{}, mouseY{};
@@ -81,24 +97,38 @@ namespace dae
 			switch (mouseState)
 			{
 			case SDL_BUTTON(1):
-				origin -= MOVEMENT_SPEED * forward * float(mouseY) * deltaTime;
-				totalYaw += ROTATION_SPEED * mouseX * deltaTime;
+				targetOrigin -= MOVEMENT_SPEED * forward * float(mouseY) * deltaTime;
+				targetYaw += ROTATION_SPEED * fovScalar * mouseX * deltaTime;
 				break;
 
 			case SDL_BUTTON(3):
-				totalYaw += ROTATION_SPEED * mouseX * deltaTime;
-				totalPitch += ROTATION_SPEED * mouseY * deltaTime;
+				targetYaw += ROTATION_SPEED * fovScalar * mouseX * deltaTime;
+				targetPitch += ROTATION_SPEED * fovScalar * mouseY * deltaTime;
+				targetPitch = std::max(-MAX_TOTAL_PITCH, std::min(targetPitch, MAX_TOTAL_PITCH));
 				break;
 			}
 
 			//todo: W2
+			origin = Lerp(origin, targetOrigin, smoothFactor);
+			totalYaw = Lerp(totalYaw, targetYaw, smoothFactor);
+			totalPitch = Lerp(totalPitch, targetPitch, smoothFactor);
+			fovAngle = Lerp(fovAngle, targetfovAngle, smoothFactor);
+			fovValue = tanf(dae::TO_RADIANS * fovAngle / 2.0f);
+
 			forward = Matrix(Matrix::CreateRotationX(totalPitch) * Matrix::CreateRotationY(totalYaw)).TransformVector(Vector3::UnitZ);
+		}
+
+		void SetOrigin(const Vector3& _origin)
+		{
+			origin = _origin;
+			targetOrigin = origin;
 		}
 		
 		void SetFieldOfViewAngle(float angle)
 		{
-			fovAngle = angle;
-			fovValue = tanf(dae::TO_RADIANS * fovAngle / 2.0f);
+			static float MAX_FOV_ANGLE{ 180.0f };
+
+			targetfovAngle = std::max(0.0f, std::min(angle, MAX_FOV_ANGLE));
 		}
 		
 		void IncrementFieldOfViewAngle(float angle)
@@ -112,8 +142,19 @@ namespace dae
 		}
 
 	private:
+		float Lerp(float a, float b, float t)
+		{
+			return a + t * (b - a);
+		}
+
+		Vector3 Lerp(const Vector3& a, const Vector3& b, float t)
+		{
+			return a + t * (b - a);
+		}
+
 		float
 			fovAngle{ 90.f },
+			targetfovAngle{ fovAngle },
 			fovValue{ tanf(dae::TO_RADIANS * fovAngle / 2.0f) };
 	};
 }
