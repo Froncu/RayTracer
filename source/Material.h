@@ -9,7 +9,7 @@ namespace dae
 	class Material
 	{
 	public:
-		Material() = default;
+		Material(float roughness) : m_Roughness{ roughness } {};
 		virtual ~Material() = default;
 
 		Material(const Material&) = delete;
@@ -24,7 +24,9 @@ namespace dae
 		 * \param v view direction
 		 * \return color
 		 */
-		virtual ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) = 0;
+		virtual ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) const = 0;
+
+		const float m_Roughness;
 	};
 #pragma endregion
 
@@ -34,11 +36,13 @@ namespace dae
 	class Material_SolidColor final : public Material
 	{
 	public:
-		Material_SolidColor(const ColorRGB& color): m_Color(color)
+		Material_SolidColor(const ColorRGB& color, float roughness = 1.0f) :
+			Material(roughness), 
+			m_Color(color)
 		{
 		}
 
-		ColorRGB Shade(const HitRecord& hitRecord, const Vector3& l, const Vector3& v) override
+		ColorRGB Shade(const HitRecord& hitRecord, const Vector3& l, const Vector3& v) const override
 		{
 			return m_Color;
 		}
@@ -54,10 +58,11 @@ namespace dae
 	class Material_Lambert final : public Material
 	{
 	public:
-		Material_Lambert(const ColorRGB& diffuseColor, float diffuseReflectance) :
+		Material_Lambert(const ColorRGB& diffuseColor, float diffuseReflectance, float roughness = 1.0f) :
+			Material(roughness),
 			m_DiffuseColor(diffuseColor), m_DiffuseReflectance(diffuseReflectance){}
 
-		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
+		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) const override
 		{
 			//todo: W3
 			return BRDF::Lambert(m_DiffuseReflectance, m_DiffuseColor);
@@ -75,13 +80,14 @@ namespace dae
 	class Material_LambertPhong final : public Material
 	{
 	public:
-		Material_LambertPhong(const ColorRGB& diffuseColor, float kd, float ks, float phongExponent):
+		Material_LambertPhong(const ColorRGB& diffuseColor, float kd, float ks, float phongExponent, float roughness = 1.0f) :
+			Material(roughness),
 			m_DiffuseColor(diffuseColor), m_DiffuseReflectance(kd), m_SpecularReflectance(ks),
 			m_PhongExponent(phongExponent)
 		{
 		}
 
-		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
+		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) const override
 		{
 			//todo: W3
 			return 
@@ -102,12 +108,13 @@ namespace dae
 	class Material_CookTorrence final : public Material
 	{
 	public:
-		Material_CookTorrence(const ColorRGB& albedo, float metalness, float roughness):
-			m_Albedo(albedo), m_Metalness(metalness), m_Roughness(roughness)
+		Material_CookTorrence(const ColorRGB& albedo, float metalness, float roughness = 1.0f) :
+			Material(roughness),
+			m_Albedo(albedo), m_Metalness(metalness)
 		{
 		}
 
-		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) override
+		ColorRGB Shade(const HitRecord& hitRecord = {}, const Vector3& l = {}, const Vector3& v = {}) const override
 		{
 			//todo: W3
 			const Vector3
@@ -133,7 +140,6 @@ namespace dae
 	private:
 		ColorRGB m_Albedo{0.955f, 0.637f, 0.538f}; //Copper
 		float m_Metalness{1.0f};
-		float m_Roughness{0.1f}; // [1.0 > 0.0] >> [ROUGH > SMOOTH]
 	};
 #pragma endregion
 }

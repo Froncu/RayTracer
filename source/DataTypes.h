@@ -158,25 +158,25 @@ namespace dae
 	};
 #pragma endregion
 #pragma region MISC
-	const float DEFAULT_RAY_MIN{ 0.001f };
+	const float RAY_EPSILON{ 0.001f };
 
 	struct Ray
 	{
-		Vector3 origin{};
-		Vector3 direction{};
+		Vector3 origin;
+		Vector3 direction;
 
-		float min{ DEFAULT_RAY_MIN };
+		float min{ RAY_EPSILON };
 		float max{ FLT_MAX };
 	};
 
 	struct HitRecord
 	{
-		Vector3 origin{};
-		Vector3 normal{};
+		Vector3 origin;
+		Vector3 normal;
 		float t = FLT_MAX;
 
 		bool didHit{ false };
-		unsigned char materialIndex{ 0 };
+		unsigned char materialIndex;
 	};
 #pragma endregion
 }

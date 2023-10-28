@@ -32,8 +32,9 @@ int main(int argc, char* args[])
 	const uint32_t width = 640;
 	const uint32_t height = 480;
 
+	const std::string title{ "RayTracer - Fratczak Jakub" };
 	SDL_Window* pWindow = SDL_CreateWindow(
-		"RayTracer - Fratczak Jakub",
+		title.c_str(),
 		SDL_WINDOWPOS_UNDEFINED,
 		SDL_WINDOWPOS_UNDEFINED,
 		width, height, 0);
@@ -77,6 +78,18 @@ int main(int argc, char* args[])
 					takeScreenshot = true;
 					break;
 
+				case SDL_SCANCODE_UP:
+					pRenderer->IncrementReflectionBounceAmount(1);
+					break;
+
+				case SDL_SCANCODE_DOWN:
+					pRenderer->IncrementReflectionBounceAmount(-1);
+					break;
+
+				case SDL_SCANCODE_F1:
+					pRenderer->ToggleReflections();
+					break;
+
 				case SDL_SCANCODE_F2:
 					pRenderer->ToggleShadows();
 					break;
@@ -109,7 +122,7 @@ int main(int argc, char* args[])
 		if (printTimer >= 1.f)
 		{
 			printTimer = 0.f;
-			std::cout << "dFPS: " << pTimer->GetdFPS() << std::endl;
+			SDL_SetWindowTitle(pWindow, (title + " - dFPS: " + std::to_string(pTimer->GetdFPS())).c_str());
 		}
 
 		//Save screenshot after full render

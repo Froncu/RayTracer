@@ -25,6 +25,8 @@ namespace dae
 
 		void CycleLightingMode();
 		void ToggleShadows();
+		void ToggleReflections();
+		void IncrementReflectionBounceAmount(int incrementer);
 
 	private:
 		enum class LightingMode
@@ -43,14 +45,17 @@ namespace dae
 			m_ShowObservedArea{ true },
 			m_ShowRadiance{ true },
 			m_ShowBRDF{ true },
-			m_ShowShadows{ true };
+			m_ShowShadows{ true },
+			m_Reflect{ true };
 
 		SDL_Window* m_pWindow{};
 
 		SDL_Surface* m_pBuffer{};
 		uint32_t* m_pBufferPixels{};
 
-		int m_Width{};
-		int m_Height{};
+		int
+			m_Width{},
+			m_Height{},
+			m_ReflectionBounceAmount{ 1 };
 	};
 }

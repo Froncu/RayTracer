@@ -5,9 +5,9 @@ namespace dae
 	struct Vector4;
 	struct Vector3
 	{
-		float x{};
-		float y{};
-		float z{};
+		float x;
+		float y;
+		float z;
 
 		Vector3() = default;
 		Vector3(float _x, float _y, float _z);

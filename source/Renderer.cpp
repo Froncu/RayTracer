@@ -33,9 +33,11 @@ void Renderer::Render(Scene* pScene) const
 		multiplierXValue{ 2.0f / m_Width },
 		multiplierYValue{ 2.0f / m_Height };
 
+	const int maxReflectionBounceAmount{ m_Reflect ? m_ReflectionBounceAmount : 0 };
+
 	Vector3 rayDirection;
 	Matrix cameraToWorld{ camera.CalculateCameraToWorld() };
-	Ray viewRay{ camera.origin };
+	Ray viewRay;
 
 	rayDirection.z = 1.0f;
 
@@ -47,31 +49,71 @@ void Renderer::Render(Scene* pScene) const
 		{
 			rayDirection.y = (1.0f - py * multiplierYValue) * fieldOfViewValue;
 
+			viewRay.origin = camera.origin;
 			viewRay.direction = cameraToWorld.TransformVector(rayDirection.Normalized());
 			
-			HitRecord closestHit;
 			ColorRGB finalColor{};
-			pScene->GetClosestHit(viewRay, closestHit);
-			if (closestHit.didHit)
+			float colorFragmentLeftToUse{ 1.0f };
+			for (int reflectionBounceAmount{ 0 }; reflectionBounceAmount <= maxReflectionBounceAmount; ++reflectionBounceAmount)
 			{
-				for (const Light& light : lights)
+				if (colorFragmentLeftToUse <= FLT_EPSILON)
+					break;
+
+				HitRecord closestHit;
+				pScene->GetClosestHit(viewRay, closestHit);
+				if (closestHit.didHit)
 				{
-					const Vector3 lightVector{ dae::LightUtils::GetDirectionToLight(light, closestHit.origin) };
-					const float lightVectorMagnitude{ lightVector.Magnitude() };
-					const Vector3 lightVectorNormalized{ lightVector / lightVectorMagnitude };
+					const Material* const pHitMaterial{ materials[closestHit.materialIndex] };
+					const float colorFragmentUsed{ m_Reflect ? (colorFragmentLeftToUse * pHitMaterial->m_Roughness) : 1.0f };
+					if (m_Reflect) 
+						colorFragmentLeftToUse -= colorFragmentUsed;
 
-					Ray lightRay{ closestHit.origin + DEFAULT_RAY_MIN * lightVectorNormalized, lightVectorNormalized };
-					lightRay.max = lightVectorMagnitude;
+					for (const Light& light : lights)
+					{
+						const Vector3 lightVector{ dae::LightUtils::GetDirectionToLight(light, closestHit.origin) };
+						const float lightVectorMagnitude{ lightVector.Magnitude() };
+						const Vector3 lightVectorNormalized{ lightVector / lightVectorMagnitude };
 
-					if (m_ShowShadows && pScene->DoesHit(lightRay))
-						continue;
+						Ray lightRay{ closestHit.origin + RAY_EPSILON * lightVectorNormalized, lightVectorNormalized };
+						lightRay.max = lightVectorMagnitude;
 
-					const float dotLightDirectionNormal{ std::max(Vector3::Dot(lightRay.direction, closestHit.normal), 0.0f) };
+						if (m_ShowShadows && pScene->DoesHit(lightRay))
+							continue;
 
-					finalColor += 
-						(m_ShowObservedArea ? dotLightDirectionNormal : 1.0f) * colors::White *
-						(m_ShowRadiance ? LightUtils::GetRadiance(light, closestHit.origin) : colors::White) *
-						(m_ShowBRDF ? materials[closestHit.materialIndex]->Shade(closestHit, lightRay.direction, viewRay.direction) : colors::White);
+						const float dotLightDirectionNormal{ std::max(Vector3::Dot(lightRay.direction, closestHit.normal), 0.0f) };
+
+						switch (m_LightingMode)
+						{
+						case dae::Renderer::LightingMode::observedArea:
+							finalColor +=
+								colorFragmentUsed *
+								dotLightDirectionNormal * colors::White;
+							break;
+
+						case dae::Renderer::LightingMode::radiance:
+							finalColor +=
+								colorFragmentUsed *
+								LightUtils::GetRadiance(light, closestHit.origin);
+							break;
+
+						case dae::Renderer::LightingMode::BRDF:
+							finalColor +=
+								colorFragmentUsed *
+								pHitMaterial->Shade(closestHit, lightRay.direction, viewRay.direction);
+							break;
+
+						case dae::Renderer::LightingMode::combined:
+							finalColor +=
+								colorFragmentUsed *
+								dotLightDirectionNormal *
+								LightUtils::GetRadiance(light, closestHit.origin) *
+								pHitMaterial->Shade(closestHit, lightRay.direction, viewRay.direction);
+							break;
+						}
+					}
+
+					viewRay.direction = Vector3::Reflect(viewRay.direction, closestHit.normal);
+					viewRay.origin = closestHit.origin;
 				}
 			}
 
@@ -102,27 +144,19 @@ void Renderer::CycleLightingMode()
 	switch (m_LightingMode)
 	{
 	case dae::Renderer::LightingMode::observedArea:
-		m_ShowObservedArea = true;
-		m_ShowRadiance = false;
-		m_ShowBRDF = false;
-		break;
+		std::cout << "--------\n" << "LIGHTING MODE: Observed Area\n" << "--------\n";
+			break;
 
 	case dae::Renderer::LightingMode::radiance:
-		m_ShowObservedArea = false;
-		m_ShowRadiance = true;
-		m_ShowBRDF = false;
-		break;
+		std::cout << "--------\n" << "LIGHTING MODE: Radiance\n" << "--------\n";
+			break;
 
 	case dae::Renderer::LightingMode::BRDF:
-		m_ShowObservedArea = false;
-		m_ShowRadiance = false;
-		m_ShowBRDF = true;
-		break;
+		std::cout << "--------\n" << "LIGHTING MODE: BRDF\n" << "--------\n";
+			break;
 
 	case dae::Renderer::LightingMode::combined:
-		m_ShowObservedArea = true;
-		m_ShowRadiance = true;
-		m_ShowBRDF = true;
+		std::cout << "--------\n" << "LIGHTING MODE: Combined\n" << "--------\n";
 		break;
 	}
 }
@@ -130,4 +164,17 @@ void Renderer::CycleLightingMode()
 void Renderer::ToggleShadows()
 {
 	m_ShowShadows = !m_ShowShadows;
+	std::cout << "--------\n" << "SHADOWS: " << std::boolalpha << m_ShowShadows << "\n--------\n";
+}
+
+void dae::Renderer::ToggleReflections()
+{
+	m_Reflect = !m_Reflect;
+	std::cout << "--------\n" << "REFLECTIONS: " << std::boolalpha << m_Reflect << "\n--------\n";
+}
+
+void dae::Renderer::IncrementReflectionBounceAmount(int incrementer)
+{
+	m_ReflectionBounceAmount = std::max(m_ReflectionBounceAmount + incrementer, 1);
+	std::cout << "--------\n" << "REFLECTIONS BOUNCE AMOUNT: " << m_ReflectionBounceAmount << "\n--------\n";
 }
