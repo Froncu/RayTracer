@@ -13,11 +13,30 @@ namespace dae
 		inline bool HitTest_Sphere(const Sphere& sphere, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 		{
 			//todo W1
+#ifdef SphereHitTestGeometric
+			const Vector3 L{ sphere.origin - ray.origin };
+
+			const float
+				& sphereRadius{ sphere.radius },
+				tca{ Vector3::Dot(L, ray.direction) },
+				odSquared{ Vector3::Dot(L, L) - (tca * tca) },
+				sphereRadiusSquared{ sphereRadius * sphereRadius };
+
+			if (odSquared > sphereRadiusSquared)
+				return false;
+
+			const float thc{ sqrtf(sphereRadiusSquared - odSquared) };
+
+			float t{ tca - thc };
+			if (t < ray.min)
+				t = tca + thc;
+#else
 			const Vector3 deltaOrigin{ ray.origin - sphere.origin };
 
 			const float
+				& sphereRadius{ sphere.radius },
 				b{ Vector3::Dot(ray.direction, deltaOrigin) },
-				c{ Vector3::Dot(deltaOrigin, deltaOrigin) - sphere.radius * sphere.radius },
+				c{ Vector3::Dot(deltaOrigin, deltaOrigin) - sphereRadius * sphereRadius },
 				discriminant{ b * b - c };
 
 			if (discriminant <= 0)
@@ -28,7 +47,7 @@ namespace dae
 			float t{ (-b - squareRootedDiscriminant) };
 			if (t < ray.min)
 				t = (-b + squareRootedDiscriminant);
-
+#endif
 			if (t < ray.min || t > ray.max)
 				return false;
 
