@@ -3,12 +3,13 @@
 #include "SDL_surface.h"
 
 //Project includes
-#include "Renderer.h"
 #include "Math.h"
 #include "Matrix.h"
 #include "Material.h"
 #include "Scene.h"
 #include "Utils.h"
+#include "Renderer.h"
+#include <execution>
 
 using namespace dae;
 
@@ -19,6 +20,9 @@ Renderer::Renderer(SDL_Window * pWindow) :
 	//Initialize
 	SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
 	m_pBufferPixels = static_cast<uint32_t*>(m_pBuffer->pixels);
+
+	for (float pixelX{ 0.5f }; pixelX < m_Width; ++pixelX)
+		m_PixelsX.push_back(pixelX);
 }
 
 void Renderer::Render(Scene* pScene) const
@@ -33,99 +37,101 @@ void Renderer::Render(Scene* pScene) const
 		multiplierXValue{ 2.0f / m_Width },
 		multiplierYValue{ 2.0f / m_Height };
 
+	const Vector3& cameraOrigin{ camera.origin };
+	const Matrix& cameraToWorld{ camera.CalculateCameraToWorld() };
+
 	const int maxReflectionBounceAmount{ m_Reflect ? m_ReflectionBounceAmount : 0 };
 
-	Vector3 rayDirection;
-	Matrix cameraToWorld{ camera.CalculateCameraToWorld() };
-	Ray viewRay;
-
-	rayDirection.z = 1.0f;
-
-	for (float px{ 0.5f }; px < m_Width; ++px)
-	{
-		rayDirection.x = (px * multiplierXValue - 1.0f) * aspectRatioTimesFieldOfViewValue;
-
-		for (float py{ 0.5f }; py < m_Height; ++py)
+	std::for_each(std::execution::par, m_PixelsX.begin(), m_PixelsX.end(),
+		[this, pScene, &materials, &lights, fieldOfViewValue, aspectRatioTimesFieldOfViewValue, multiplierXValue, multiplierYValue, &cameraOrigin, &cameraToWorld, maxReflectionBounceAmount]
+		(float px)
 		{
-			rayDirection.y = (1.0f - py * multiplierYValue) * fieldOfViewValue;
+			Vector3 rayDirection;
+			rayDirection.z = 1.0f;
+			rayDirection.x = (px * multiplierXValue - 1.0f) * aspectRatioTimesFieldOfViewValue;
 
-			viewRay.origin = camera.origin;
-			viewRay.direction = cameraToWorld.TransformVector(rayDirection.Normalized());
-			
-			ColorRGB finalColor{};
-			float colorFragmentLeftToUse{ 1.0f };
-			for (int reflectionBounceAmount{ 0 }; reflectionBounceAmount <= maxReflectionBounceAmount; ++reflectionBounceAmount)
+			for (float py{ 0.5f }; py < m_Height; ++py)
 			{
-				if (colorFragmentLeftToUse <= FLT_EPSILON)
-					break;
+				rayDirection.y = (1.0f - py * multiplierYValue) * fieldOfViewValue;
 
-				HitRecord closestHit;
-				pScene->GetClosestHit(viewRay, closestHit);
-				if (closestHit.didHit)
+				Ray viewRay;
+				viewRay.origin = cameraOrigin;
+				viewRay.direction = cameraToWorld.TransformVector(rayDirection.Normalized());
+
+				ColorRGB finalColor{};
+				float colorFragmentLeftToUse{ 1.0f };
+				for (int reflectionBounceAmount{ 0 }; reflectionBounceAmount <= maxReflectionBounceAmount; ++reflectionBounceAmount)
 				{
-					const Material* const pHitMaterial{ materials[closestHit.materialIndex] };
-					const float colorFragmentUsed{ m_Reflect ? (colorFragmentLeftToUse * pHitMaterial->m_Roughness) : 1.0f };
-					if (m_Reflect) 
-						colorFragmentLeftToUse -= colorFragmentUsed;
-
-					for (const Light& light : lights)
+					HitRecord closestHit;
+					pScene->GetClosestHit(viewRay, closestHit);
+					if (closestHit.didHit)
 					{
-						const Vector3 lightVector{ dae::LightUtils::GetDirectionToLight(light, closestHit.origin) };
-						const float lightVectorMagnitude{ lightVector.Magnitude() };
-						const Vector3 lightVectorNormalized{ lightVector / lightVectorMagnitude };
+						const Material* const pHitMaterial{ materials[closestHit.materialIndex] };
+						const float colorFragmentUsed{ m_Reflect ? (colorFragmentLeftToUse * pHitMaterial->m_Roughness) : 1.0f };
+						if (m_Reflect)
+							colorFragmentLeftToUse -= colorFragmentUsed;
 
-						Ray lightRay{ closestHit.origin + RAY_EPSILON * lightVectorNormalized, lightVectorNormalized };
-						lightRay.max = lightVectorMagnitude;
-
-						if (m_ShowShadows && pScene->DoesHit(lightRay))
-							continue;
-
-						const float dotLightDirectionNormal{ std::max(Vector3::Dot(lightRay.direction, closestHit.normal), 0.0f) };
-
-						switch (m_LightingMode)
+						for (const Light& light : lights)
 						{
-						case dae::Renderer::LightingMode::observedArea:
-							finalColor +=
-								colorFragmentUsed *
-								dotLightDirectionNormal * colors::White;
-							break;
+							const Vector3 lightVector{ dae::LightUtils::GetDirectionToLight(light, closestHit.origin) };
+							const float lightVectorMagnitude{ lightVector.Magnitude() };
+							const Vector3 lightVectorNormalized{ lightVector / lightVectorMagnitude };
 
-						case dae::Renderer::LightingMode::radiance:
-							finalColor +=
-								colorFragmentUsed *
-								LightUtils::GetRadiance(light, closestHit.origin);
-							break;
+							Ray lightRay{ closestHit.origin + RAY_EPSILON * lightVectorNormalized, lightVectorNormalized };
+							lightRay.max = lightVectorMagnitude;
 
-						case dae::Renderer::LightingMode::BRDF:
-							finalColor +=
-								colorFragmentUsed *
-								pHitMaterial->Shade(closestHit, lightRay.direction, viewRay.direction);
-							break;
+							if (m_ShowShadows && pScene->DoesHit(lightRay))
+								continue;
 
-						case dae::Renderer::LightingMode::combined:
-							finalColor +=
-								colorFragmentUsed *
-								dotLightDirectionNormal *
-								LightUtils::GetRadiance(light, closestHit.origin) *
-								pHitMaterial->Shade(closestHit, lightRay.direction, viewRay.direction);
-							break;
+							const float dotLightDirectionNormal{ std::max(Vector3::Dot(lightRay.direction, closestHit.normal), 0.0f) };
+
+							switch (m_LightingMode)
+							{
+							case dae::Renderer::LightingMode::observedArea:
+								finalColor +=
+									colorFragmentUsed *
+									dotLightDirectionNormal * colors::White;
+								break;
+
+							case dae::Renderer::LightingMode::radiance:
+								finalColor +=
+									colorFragmentUsed *
+									LightUtils::GetRadiance(light, closestHit.origin);
+								break;
+
+							case dae::Renderer::LightingMode::BRDF:
+								finalColor +=
+									colorFragmentUsed *
+									pHitMaterial->Shade(closestHit, lightRay.direction, viewRay.direction);
+								break;
+
+							case dae::Renderer::LightingMode::combined:
+								finalColor +=
+									colorFragmentUsed *
+									dotLightDirectionNormal *
+									LightUtils::GetRadiance(light, closestHit.origin) *
+									pHitMaterial->Shade(closestHit, lightRay.direction, viewRay.direction);
+								break;
+							}
 						}
+
+						if (colorFragmentLeftToUse <= FLT_EPSILON)
+							break;
+
+						viewRay.direction = Vector3::Reflect(viewRay.direction, closestHit.normal);
+						viewRay.origin = closestHit.origin;
 					}
-
-					viewRay.direction = Vector3::Reflect(viewRay.direction, closestHit.normal);
-					viewRay.origin = closestHit.origin;
 				}
+
+				//Update Color in Buffer
+				finalColor.MaxToOne();
+
+				m_pBufferPixels[int(px) + (int(py) * m_Width)] = SDL_MapRGB(m_pBuffer->format,
+					static_cast<uint8_t>(finalColor.r * 255),
+					static_cast<uint8_t>(finalColor.g * 255),
+					static_cast<uint8_t>(finalColor.b * 255));
 			}
-
-			//Update Color in Buffer
-			finalColor.MaxToOne();
-
-			m_pBufferPixels[int(px) + (int(py) * m_Width)] = SDL_MapRGB(m_pBuffer->format,
-				static_cast<uint8_t>(finalColor.r * 255),
-				static_cast<uint8_t>(finalColor.g * 255),
-				static_cast<uint8_t>(finalColor.b * 255));
-		}
-	}
+		});
 
 	//@END
 	//Update SDL Surface

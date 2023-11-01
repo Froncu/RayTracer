@@ -133,7 +133,7 @@ namespace dae
 				break;
 
 			case TriangleCullMode::NoCulling:
-				if (dae::AreEqual(dotNormalRayDirection, 0, FLT_EPSILON))
+				if (dae::AreEqual(dotNormalRayDirection, 0.0f, FLT_EPSILON))
 					return false;
 				break;
 			}
@@ -151,14 +151,14 @@ namespace dae
 			if (t < ray.min || t > ray.max)
 				return false;
 
-			const Vector3 P{ rayOrigin + rayDirection * t };
-
-			const Vector3 aVertices[]{ v0, v1, v2 };
+			const Vector3
+				P{ rayOrigin + rayDirection * t },
+				* apVertices[]{ &v0, &v1, &v2 };
 			for (int index{}; index < 3; ++index)
 			{
 				const Vector3
-					& startingVertex{ aVertices[index] },
-					& endingVertex{ aVertices[(index + 1) % 3] },
+					& startingVertex{ *apVertices[index] },
+					& endingVertex{ *apVertices[(index + 1) % 3] },
 					a{ endingVertex - startingVertex },
 					c{ P - startingVertex };
 

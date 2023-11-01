@@ -4,6 +4,8 @@
 
 struct SDL_Window;
 struct SDL_Surface;
+struct Matrix;
+struct Vector3;
 
 namespace dae
 {
@@ -57,5 +59,7 @@ namespace dae
 			m_Width{},
 			m_Height{},
 			m_ReflectionBounceAmount{ 1 };
+
+		std::vector<float> m_PixelsX{};
 	};
 }
