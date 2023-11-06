@@ -14,7 +14,7 @@ Camera::Camera(const Vector3& origin, float fieldOfViewAngle) :
 	m_TotalPitch{}, m_TargetPitch{},
 	m_TotalYaw{}, m_TargetYaw{},
 
-	m_SmoothFactor{ 0.25f },
+	m_SmoothFactor{ 1.0f },
 
 	m_CameraToWorld{ CalculateCameraToWorld() }
 {

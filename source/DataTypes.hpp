@@ -19,7 +19,7 @@ public:
 struct Plane
 {
 public:
-	Vector3 
+	Vector3
 		origin,
 		normal;
 
@@ -50,11 +50,12 @@ public:
 struct TriangleMesh
 {
 public:
-	TriangleMesh() = default;
-
 	TriangleMesh(unsigned char materialIndex, Triangle::CullMode cullMode = Triangle::CullMode::backFace) :
-		vPositions{},
-		vNormals{},
+		smallestAABB{}, smallestAABBTransformed{},
+		largestAABB{}, largestAABBTransformed{},
+
+		vPositions{}, vPositionsTransformed{},
+		vNormals{}, vNormalsTransformed{},
 
 		vIndices{},
 
@@ -63,10 +64,9 @@ public:
 
 		translator{ IDENTITY },
 		rotor{ IDENTITY },
-		scalar{ IDENTITY }
+		scalar{ IDENTITY },
+		finalTransform{ IDENTITY }
 	{
-		CalculateNormals();
-		UpdateTransforms();
 	}
 
 	TriangleMesh(const std::string& OBJFilePath, unsigned char materialIndex, Triangle::CullMode cullMode = Triangle::CullMode::backFace) :
@@ -80,23 +80,14 @@ public:
 
 		translator{ IDENTITY },
 		rotor{ IDENTITY },
-		scalar{ IDENTITY }
+		scalar{ IDENTITY },
+		finalTransform{ IDENTITY }
 	{
 		ParseOBJ(OBJFilePath);
+
+		CalculateNormals();
+		UpdateAABB();
 		UpdateTransforms();
-	}
-
-	inline void UpdateTransforms(int startingIndex = 0)
-	{
-		const Matrix finalTransform{ scalar * rotor * translator };
-
-		vPositionsTransformed.resize(vPositions.size());
-		for (int index{ startingIndex }; index < vPositions.size(); ++index)
-			vPositionsTransformed[index] = finalTransform.TransformPoint(vPositions[index]);
-
-		vNormalsTransformed.resize(vNormals.size());
-		for (int index{ startingIndex }; index < vNormals.size(); ++index)
-			vNormalsTransformed[index] = finalTransform.TransformVector(vNormals[index]).GetNormalized();
 	}
 
 	inline void AppendTriangle(const Triangle& triangle)
@@ -112,23 +103,44 @@ public:
 		vIndices.push_back(startingIndex + 2);
 
 		CalculateNormals();
+		UpdateAABB();
 		UpdateTransforms(startingIndex);
 	}
 
-	inline void SetTranslator(const Vector3& _translator)
+	inline void UpdateTransforms(int startingIndex = 0)
 	{
-		this->translator = Matrix::CreateTranslator(_translator);
+		vPositionsTransformed.resize(vPositions.size());
+		for (int index{ startingIndex }; index < vPositions.size(); ++index)
+			vPositionsTransformed[index] = finalTransform.TransformPoint(vPositions[index]);
+
+		vNormalsTransformed.resize(vNormals.size());
+		for (int index{ startingIndex }; index < vNormals.size(); ++index)
+			vNormalsTransformed[index] = finalTransform.TransformVector(vNormals[index]).GetNormalized();
+
+		UpdateAABBTransformed();
 	}
 
-	inline void SetRotor(float pitch, float yaw, float roll)
+	inline void SetTranslator(const Vector3& translator)
 	{
-		rotor = Matrix::CreateRotor(pitch, yaw, roll);
+		this->translator = Matrix::CreateTranslator(translator);
+		finalTransform = scalar * rotor * this->translator;
 	}
 
-	inline void SetScalar(float _scalar)
+	inline void SetRotorY(float yaw)
 	{
-		this->scalar = Matrix::CreateScalar(_scalar);
+		rotor = Matrix::CreateRotorY(yaw);
+		finalTransform = scalar * rotor * translator;
 	}
+
+	inline void SetScalar(float scalar)
+	{
+		this->scalar = Matrix::CreateScalar(scalar);
+		finalTransform = this->scalar * rotor * translator;
+	}
+
+	Vector3
+		smallestAABB, smallestAABBTransformed,
+		largestAABB, largestAABBTransformed;
 
 	std::vector<Vector3>
 		vPositionsTransformed,
@@ -140,19 +152,6 @@ public:
 	Triangle::CullMode cullMode;
 
 private:
-	inline void CalculateNormals()
-	{
-		for (int index{}; index < vIndices.size();)
-		{
-			const Vector3&
-				v0{ vPositions[vIndices[index++]] },
-				v1{ vPositions[vIndices[index++]] },
-				v2{ vPositions[vIndices[index++]] };
-
-			vNormals.push_back(Vector3::Cross((v1 - v0), (v2 - v0)).GetNormalized());
-		}
-	}
-
 	inline bool ParseOBJ(const std::string& OBJFilePath)
 	{
 		std::ifstream file(OBJFilePath);
@@ -193,9 +192,72 @@ private:
 				break;
 		}
 
-		CalculateNormals();
-
 		return true;
+	}
+
+	inline void CalculateNormals()
+	{
+		for (int index{}; index < vIndices.size();)
+		{
+			const Vector3&
+				v0{ vPositions[vIndices[index++]] },
+				v1{ vPositions[vIndices[index++]] },
+				v2{ vPositions[vIndices[index++]] };
+
+			vNormals.push_back(Vector3::Cross((v1 - v0), (v2 - v0)).GetNormalized());
+		}
+	}
+
+	inline void UpdateAABB()
+	{
+		if (vPositions.size())
+		{
+			smallestAABB = vPositions[0];
+			largestAABB = vPositions[0];
+			for (const Vector3& position : vPositions)
+			{
+				smallestAABB = Vector3::GetSmallestComponents(position, smallestAABB);
+				largestAABB = Vector3::GetLargestComponents(position, largestAABB);
+			}
+		}
+	}
+
+	inline void UpdateAABBTransformed()
+	{
+		Vector3 
+			tSmallestAABB{ finalTransform.TransformPoint(smallestAABB) },
+			tLargestAABB{ tSmallestAABB };
+
+		Vector3 tAABB{ finalTransform.TransformPoint(largestAABB.x, smallestAABB.y, smallestAABB.z) };
+		tSmallestAABB = Vector3::GetSmallestComponents(tAABB, tSmallestAABB);
+		tLargestAABB = Vector3::GetLargestComponents(tAABB, tLargestAABB);
+
+		tAABB = finalTransform.TransformPoint(largestAABB.x, smallestAABB.y, largestAABB.z);
+		tSmallestAABB = Vector3::GetSmallestComponents(tAABB, tSmallestAABB);
+		tLargestAABB = Vector3::GetLargestComponents(tAABB, tLargestAABB);
+
+		tAABB = finalTransform.TransformPoint(smallestAABB.x, smallestAABB.y, largestAABB.z);
+		tSmallestAABB = Vector3::GetSmallestComponents(tAABB, tSmallestAABB);
+		tLargestAABB = Vector3::GetLargestComponents(tAABB, tLargestAABB);
+
+		tAABB = finalTransform.TransformPoint(smallestAABB.x, largestAABB.y, smallestAABB.z);
+		tSmallestAABB = Vector3::GetSmallestComponents(tAABB, tSmallestAABB);
+		tLargestAABB = Vector3::GetLargestComponents(tAABB, tLargestAABB);
+
+		tAABB = finalTransform.TransformPoint(largestAABB.x, largestAABB.y, smallestAABB.z);
+		tSmallestAABB = Vector3::GetSmallestComponents(tAABB, tSmallestAABB);
+		tLargestAABB = Vector3::GetLargestComponents(tAABB, tLargestAABB);
+
+		tAABB = finalTransform.TransformPoint(largestAABB);
+		tSmallestAABB = Vector3::GetSmallestComponents(tAABB, tSmallestAABB);
+		tLargestAABB = Vector3::GetLargestComponents(tAABB, tLargestAABB);
+
+		tAABB = finalTransform.TransformPoint(smallestAABB.x, largestAABB.y, smallestAABB.z);
+		tSmallestAABB = Vector3::GetSmallestComponents(tAABB, tSmallestAABB);
+		tLargestAABB = Vector3::GetLargestComponents(tAABB, tLargestAABB);
+
+		smallestAABBTransformed = tSmallestAABB;
+		largestAABBTransformed = tLargestAABB;
 	}
 
 	std::vector<Vector3>
@@ -205,7 +267,8 @@ private:
 	Matrix
 		translator,
 		rotor,
-		scalar;
+		scalar,
+		finalTransform;
 };
 
 struct Light
@@ -222,11 +285,11 @@ static constexpr float RAY_EPSILON{ 0.001f };
 struct Ray
 {
 public:
-	Vector3 
+	Vector3
 		origin,
 		direction;
 
-	float 
+	float
 		min{ RAY_EPSILON },
 		max{ FLT_MAX };
 };
@@ -234,7 +297,7 @@ public:
 struct HitRecord
 {
 public:
-	Vector3 
+	Vector3
 		origin,
 		normal;
 

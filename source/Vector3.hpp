@@ -65,6 +65,26 @@ public:
 		return vector1 - (2.0f * Dot(vector1, vector2) * vector2);
 	}
 
+	static inline Vector3 GetLargestComponents(const Vector3& vector1, const Vector3& vector2)
+	{
+		return Vector3
+		(
+			std::max(vector1.x, vector2.x),
+			std::max(vector1.y, vector2.y),
+			std::max(vector1.z, vector2.z)
+		);
+	}
+
+	static inline Vector3 GetSmallestComponents(const Vector3& vector1, const Vector3& vector2)
+	{
+		return Vector3
+		(
+			std::min(vector1.x, vector2.x),
+			std::min(vector1.y, vector2.y),
+			std::min(vector1.z, vector2.z)
+		);
+	}
+
 	inline Vector4 GetPoint4() const
 	{
 		return Vector4

@@ -126,7 +126,7 @@ public:
 
 	virtual void Update(const Timer& timer) override;
 
-private:
+//private:
 	//TriangleMesh* m_apTriangleMeshes[3];
 };
 
@@ -140,4 +140,9 @@ public:
 	SceneWeek4Bunny(SceneWeek4Bunny&&) noexcept = delete;
 	SceneWeek4Bunny& operator=(const SceneWeek4Bunny&) = delete;
 	SceneWeek4Bunny& operator=(SceneWeek4Bunny&&) noexcept = delete;
+
+	virtual void Update(const Timer& timer) override;
+
+private:
+	TriangleMesh* m_pBunnyTriangleMesh;
 };

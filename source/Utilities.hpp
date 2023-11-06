@@ -116,6 +116,37 @@ inline bool HitTestPlane(const Plane& plane, const Ray& ray)
 	return HitTestPlane(plane, ray, temporary, true);
 }
 
+inline bool SlabTestTriangleMesh(const TriangleMesh& triangleMesh, const Ray& ray)
+{
+	const Vector3
+		smallestAABBTransformed{ triangleMesh.smallestAABBTransformed },
+		largestAABBTransformed{ triangleMesh.largestAABBTransformed },
+		rayOrigin{ ray.origin },
+		rayDirection{ ray.direction };
+
+	const float
+		tx1{ (smallestAABBTransformed.x - rayOrigin.x) / rayDirection.x },
+		tx2{ (largestAABBTransformed.x - rayOrigin.x) / rayDirection.x },
+
+		tyl{ (smallestAABBTransformed.y - rayOrigin.y) / rayDirection.y },
+		ty2{ (largestAABBTransformed.y - rayOrigin.y) / rayDirection.y },
+
+		tzl{ (smallestAABBTransformed.z - rayOrigin.z) / rayDirection.z },
+		tz2{ (largestAABBTransformed.z - rayOrigin.z) / rayDirection.z };
+
+	float 
+		tMin{ std::min(tx1, tx2) },
+		tMax{ std::max(tx1, tx2) };
+
+	tMin = std::max(tMin, std::min(tyl, ty2));
+	tMax = std::min(tMax, std::max(tyl, ty2));
+
+	tMin = std::max(tMin, std::min(tzl, tz2));
+	tMax = std::min(tMax, std::max(tzl, tz2));
+
+	return tMax > 0 && tMax >= tMin;
+}
+
 inline bool HitTestTriangle(const Triangle& triangle, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 {
 	const Vector3
@@ -196,19 +227,26 @@ inline bool HitTestTriangle(const Triangle& triangle, const Ray& ray)
 
 inline bool HitTestTriangleMesh(const TriangleMesh& triangleMesh, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 {
+	if (!SlabTestTriangleMesh(triangleMesh, ray))
+		return false;
+
 	bool didHit{};
 	for (int index{}; index < triangleMesh.vIndices.size(); index += 3)
 	{
 		if (HitTestTriangle(
 			Triangle(
-			triangleMesh.vPositionsTransformed[triangleMesh.vIndices[index]],
-			triangleMesh.vPositionsTransformed[triangleMesh.vIndices[index + 1]],
-			triangleMesh.vPositionsTransformed[triangleMesh.vIndices[index + 2]],
-			triangleMesh.vNormalsTransformed[index / 3],
-			triangleMesh.materialIndex,
-			triangleMesh.cullMode),
-			ray, hitRecord, ignoreHitRecord))
+				triangleMesh.vPositionsTransformed[triangleMesh.vIndices[index]],
+				triangleMesh.vPositionsTransformed[triangleMesh.vIndices[index + 1]],
+				triangleMesh.vPositionsTransformed[triangleMesh.vIndices[index + 2]],
+				triangleMesh.vNormalsTransformed[index / 3],
+				triangleMesh.materialIndex,
+				triangleMesh.cullMode), ray, hitRecord, ignoreHitRecord))
+		{
+			if (ignoreHitRecord)
+				return true;
+			
 			didHit = true;
+		}
 	}
 
 	return didHit;

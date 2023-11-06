@@ -17,7 +17,7 @@ Renderer::Renderer(SDL_Window* const pWindow) :
 	m_ReflectionBounceAmount{ 1 },
 
 	m_CastShadows{ true },
-	m_Reflect{ true },
+	m_Reflect{},
 
 	m_PixelsX{}
 {

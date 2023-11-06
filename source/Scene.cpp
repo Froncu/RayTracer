@@ -230,22 +230,25 @@ void SceneWeek4::Update(const Timer& timer)
 {
 	Scene::Update(timer);
 
-	const auto yawAngle{ (cos(timer.GetTotal()) + 1.0f) / 2.0f * DOUBLE_PI };
+	const float yawAngle{ (cos(timer.GetTotal()) + 1.0f) / 2.0f * DOUBLE_PI };
+
 	//for (TriangleMesh* const pTriangleMesh : m_apTriangleMeshes)
 	//{
-	//	pTriangleMesh->SetRotor(0.0f, yawAngle, 0.0f);
+	//	pTriangleMesh->SetRotorY(yawAngle);
 	//	pTriangleMesh->UpdateTransforms();
 	//}
 
 	for (TriangleMesh& triangleMesh : m_vTriangleMeshes)
 	{
-		triangleMesh.SetRotor(0.0f, yawAngle, 0.0f);
+		triangleMesh.SetRotorY(yawAngle);
 		triangleMesh.UpdateTransforms();
 	}
 }
 
 SceneWeek4Bunny::SceneWeek4Bunny() :
-	Scene("Week 4: Bunny", Camera(Vector3(0.0f, 3.0f, -9.0f)))
+	Scene("Week 4: Bunny", Camera(Vector3(0.0f, 3.0f, -9.0f))),
+
+	m_pBunnyTriangleMesh{}
 {
 	const unsigned char 
 		lambertGrayBlue{ AddMaterial(new LambertMaterial(ColorRGB(0.49f, 0.57f, 0.57f), 1.0f)) },
@@ -257,12 +260,21 @@ SceneWeek4Bunny::SceneWeek4Bunny() :
 	AddPlane(Plane(Vector3(5.0f, 0.0f, 0.0f), Vector3(-1.0f, 0.0f, 0.0), lambertGrayBlue)); //RIGHT
 	AddPlane(Plane(Vector3(-5.0f, 0.0f, 0.0f), Vector3(1.0f, 0.0f, 0.0f), lambertGrayBlue)); //LEFT
 
-	TriangleMesh* pTriangleMesh{ AddTriangleMesh(TriangleMesh("Resources/lowpoly_bunny.obj", lambertWhite)) };
+	m_pBunnyTriangleMesh = AddTriangleMesh(TriangleMesh("Resources/lowpoly_bunny.obj", lambertWhite));
 
-	pTriangleMesh->SetScalar(2.0f);
-	pTriangleMesh->UpdateTransforms();
+	m_pBunnyTriangleMesh->SetScalar(2.0f);
+	m_pBunnyTriangleMesh->UpdateTransforms();
 
 	AddLight(Light(Vector3(0.0f, 5.0f, 5.0f), 50.0f, ColorRGB(1.0f, 0.61f, 0.45f))); //Backlight
 	AddLight(Light(Vector3(-2.5f, 5.0f, -5.0f), 70.0f, ColorRGB(1.0f, 0.8f, 0.45f))); //Front Light Left
 	AddLight(Light(Vector3(2.5f, 2.5f, -5.0f), 50.0f, ColorRGB(0.34f, 0.47f, 0.68f)));
+}
+
+void SceneWeek4Bunny::Update(const Timer& timer)
+{
+	Scene::Update(timer);
+
+	const float yawAngle{ (cos(timer.GetTotal())) / 2.0f * DOUBLE_PI };
+	m_pBunnyTriangleMesh->SetRotorY(yawAngle);
+	m_pBunnyTriangleMesh->UpdateTransforms();
 }

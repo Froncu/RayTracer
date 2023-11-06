@@ -7,8 +7,6 @@
 class Camera final
 {
 public:
-	Camera() = default;
-
 	Camera(const Vector3& origin, float fieldOfViewAngle = TO_RADIANS * 45.0f);
 
 	inline Matrix CalculateCameraToWorld() const

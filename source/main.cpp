@@ -43,6 +43,16 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* args[])
 		new SceneWeek4();
 		//new SceneWeek4Bunny();
 
+	std::cout 
+		<< "--------\n"
+		<< "CONTROLS:\n"
+		<< "Toggle Reflections: F1\n"
+		<< "Toggle Shadows: F2\n"
+		<< "Cycle Lighting Modes: F3\n"
+		<< "Cycle Lighting Modes: F6\n"
+		<< "In-/decrement Reflection Bounces: UP/DOWN\n"
+		<< "--------\n";
+
 	timer.Start();
 
 	bool
