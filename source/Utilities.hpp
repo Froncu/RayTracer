@@ -209,7 +209,7 @@ inline bool HitTestTriangle(const Triangle& triangle, const Ray& ray, HitRecord&
 		hitRecord.t = t;
 
 		hitRecord.origin = P;
-		hitRecord.normal = normal;
+		hitRecord.normal = signbit(dotRayDirectionNormal) ? normal : -normal;
 
 		hitRecord.didHit = true;
 		hitRecord.materialIndex = triangle.materialIndex;
