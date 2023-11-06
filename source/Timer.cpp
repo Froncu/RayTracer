@@ -2,12 +2,9 @@
 
 #include <iostream>
 #include <numeric>
-
-#include <iostream>
 #include <fstream>
 
 #include "SDL.h"
-using namespace dae;
 
 Timer::Timer()
 {

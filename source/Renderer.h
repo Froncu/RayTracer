@@ -1,65 +1,55 @@
 #pragma once
 
-#include <cstdint>
+//#include <cstdint>
+#include <vector>
 
-struct SDL_Window;
-struct SDL_Surface;
-struct Matrix;
-struct Vector3;
+#include "SDL.h"
 
-namespace dae
+class Scene;
+
+class Renderer final
 {
-	class Scene;
+public:
+	Renderer(SDL_Window* const pWindow);
+	~Renderer() = default;
 
-	class Renderer final
+	Renderer(const Renderer&) = delete;
+	Renderer(Renderer&&) noexcept = delete;
+	Renderer& operator=(const Renderer&) = delete;
+	Renderer& operator=(Renderer&&) noexcept = delete;
+
+	void Render(const Scene* const pScene) const;
+	bool SaveBufferToImage() const;
+
+	void CycleLightingMode();
+	void ToggleShadows();
+	void ToggleReflections();
+	void IncrementReflectionBounceAmount(int incrementer);
+
+private:
+	SDL_Window* const m_pWindow;
+	SDL_Surface* const m_pBuffer;
+	uint32_t* m_pBufferPixels;
+
+	int
+		m_Width,
+		m_Height;
+
+	enum class LightingMode
 	{
-	public:
-		Renderer(SDL_Window* pWindow);
-		~Renderer() = default;
+		observedArea,
+		radiance,
+		BRDF,
+		combined,
 
-		Renderer(const Renderer&) = delete;
-		Renderer(Renderer&&) noexcept = delete;
-		Renderer& operator=(const Renderer&) = delete;
-		Renderer& operator=(Renderer&&) noexcept = delete;
+		AMOUNT
+	} m_LightingMode;
 
-		void Render(Scene* pScene) const;
-		bool SaveBufferToImage() const;
+	int m_ReflectionBounceAmount;
 
-		void CycleLightingMode();
-		void ToggleShadows();
-		void ToggleReflections();
-		void IncrementReflectionBounceAmount(int incrementer);
+	bool
+		m_CastShadows,
+		m_Reflect;
 
-	private:
-		enum class LightingMode
-		{
-			observedArea,
-			radiance,
-			BRDF,
-			combined,
-
-			AMOUNT
-		};
-
-		LightingMode m_LightingMode{ LightingMode::combined };
-
-		bool
-			m_ShowObservedArea{ true },
-			m_ShowRadiance{ true },
-			m_ShowBRDF{ true },
-			m_ShowShadows{ true },
-			m_Reflect{ true };
-
-		SDL_Window* m_pWindow{};
-
-		SDL_Surface* m_pBuffer{};
-		uint32_t* m_pBufferPixels{};
-
-		int
-			m_Width{},
-			m_Height{},
-			m_ReflectionBounceAmount{ 1 };
-
-		std::vector<float> m_PixelsX{};
-	};
-}
+	std::vector<float> m_PixelsX;
+};

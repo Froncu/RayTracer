@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Mathemathics">
+      <UniqueIdentifier>{2fa06ec7-8579-4ea9-bd03-62790c8e7190}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Miscellaneous">
+      <UniqueIdentifier>{3f5fa5e0-9c80-4d6d-909b-e4c5ff3b7308}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Miscellaneous\Renderer">
+      <UniqueIdentifier>{7e2ec7f1-89b7-41ed-b357-3a407a64723c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Miscellaneous\Timer">
+      <UniqueIdentifier>{72056cb6-72a2-42b7-b05e-376f1ddd957e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Objects">
+      <UniqueIdentifier>{6d4f663e-d1b2-4a6d-b467-02c7508ed4b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Objects\Camera">
+      <UniqueIdentifier>{9fa0d2ca-8ec9-455a-b385-f2527fe5153b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Objects\Scene">
+      <UniqueIdentifier>{52fec987-f934-4654-bc31-3f389f9f6235}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Timer.h">
+      <Filter>Miscellaneous\Timer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer.h">
+      <Filter>Miscellaneous\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Objects\Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>Objects\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector4.hpp">
+      <Filter>Mathemathics</Filter>
+    </ClInclude>
+    <ClInclude Include="Matrix.hpp">
+      <Filter>Mathemathics</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities.hpp">
+      <Filter>Mathemathics</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector3.hpp">
+      <Filter>Mathemathics</Filter>
+    </ClInclude>
+    <ClInclude Include="Constants.hpp">
+      <Filter>Mathemathics</Filter>
+    </ClInclude>
+    <ClInclude Include="BRDFs.hpp">
+      <Filter>Mathemathics</Filter>
+    </ClInclude>
+    <ClInclude Include="DataTypes.hpp">
+      <Filter>Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Materials.hpp">
+      <Filter>Miscellaneous</Filter>
+    </ClInclude>
+    <ClInclude Include="ColorRGB.hpp">
+      <Filter>Miscellaneous</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Timer.cpp">
+      <Filter>Miscellaneous\Timer</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer.cpp">
+      <Filter>Miscellaneous\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Objects\Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>Objects\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+</Project>

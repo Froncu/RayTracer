@@ -1,18 +1,11 @@
-//External includes
-#include "vld.h"
-#include "SDL.h"
-#include "SDL_surface.h"
-#undef main
-
-//Standard includes
+#include <string>
 #include <iostream>
 
-//Project includes
+#include "vld.h"
+#include "SDL.h"
 #include "Timer.h"
 #include "Renderer.h"
 #include "Scene.h"
-
-using namespace dae;
 
 void ShutDown(SDL_Window* pWindow)
 {
@@ -20,17 +13,13 @@ void ShutDown(SDL_Window* pWindow)
 	SDL_Quit();
 }
 
-int main(int argc, char* args[])
+int main([[maybe_unused]] int argc, [[maybe_unused]] char* args[])
 {
-	//Unreferenced parameters
-	(void)argc;
-	(void)args;
-
-	//Create window + surfaces
 	SDL_Init(SDL_INIT_VIDEO);
 
-	const uint32_t width = 640;
-	const uint32_t height = 480;
+	const uint32_t 
+		width{ 640 },
+		height{ 480 };
 
 	const std::string title{ "RayTracer - Fratczak Jakub" };
 	SDL_Window* pWindow = SDL_CreateWindow(
@@ -44,106 +33,95 @@ int main(int argc, char* args[])
 
 	SDL_SetRelativeMouseMode(SDL_bool(true));
 
-	//Initialize "framework"
-	const auto pTimer = new Timer();
-	const auto pRenderer = new Renderer(pWindow);
+	Timer timer{};
+	Renderer renderer{ pWindow };
 
-	//const auto pScene = new Scene_W1();
-	//const auto pScene = new Scene_W2();
-	//const auto pScene = new Scene_W3();
-	const auto pScene = new Scene_W4();
-	//const auto pScene = new Scene_W4_Bunny();
-	pScene->Initialize();
+	Scene* const pScene = 
+		//new SceneWeek1();
+		//new SceneWeek2();
+		//new SceneWeek3();
+		new SceneWeek4();
+		//new SceneWeek4Bunny();
 
-	//Start loop
-	pTimer->Start();
+	timer.Start();
 
-	float printTimer = 0.f;
-	bool isLooping = true;
-	bool takeScreenshot = false;
+	bool
+		isLooping{ true },
+		takeScreenshot{};
+	float printTimer{};
 	while (isLooping)
 	{
-		//--------- Get input events ---------
-		SDL_Event e;
-		while (SDL_PollEvent(&e))
+		SDL_Event event;
+		while (SDL_PollEvent(&event))
 		{
-			switch (e.type)
+			switch (event.type)
 			{
 			case SDL_QUIT:
 				isLooping = false;
 				break;
 
 			case SDL_KEYUP:
-				switch (e.key.keysym.scancode)
+				switch (event.key.keysym.scancode)
 				{
 				case SDL_SCANCODE_X:
 					takeScreenshot = true;
 					break;
 
 				case SDL_SCANCODE_UP:
-					pRenderer->IncrementReflectionBounceAmount(1);
+					renderer.IncrementReflectionBounceAmount(1);
 					break;
 
 				case SDL_SCANCODE_DOWN:
-					pRenderer->IncrementReflectionBounceAmount(-1);
+					renderer.IncrementReflectionBounceAmount(-1);
 					break;
 
 				case SDL_SCANCODE_F1:
-					pRenderer->ToggleReflections();
+					renderer.ToggleReflections();
 					break;
 
 				case SDL_SCANCODE_F2:
-					pRenderer->ToggleShadows();
+					renderer.ToggleShadows();
 					break;
 
 				case SDL_SCANCODE_F3:
-					pRenderer->CycleLightingMode();
+					renderer.CycleLightingMode();
 					break;
 
 				case SDL_SCANCODE_F6:
-					pTimer->StartBenchmark();
+					timer.StartBenchmark();
 					break;
 				}
 				break;
 
 			case SDL_MOUSEWHEEL:
-				pScene->GetCamera().IncrementFieldOfViewAngle(4.0f * -float(e.wheel.y));
+				pScene->GetCamera().IncrementFieldOfViewAngle(-float(event.wheel.y) / 20.0f);
 				break;
 			}
 		}
 
-		//--------- Update ---------
-		pScene->Update(pTimer);
-
-		//--------- Render ---------
-		pRenderer->Render(pScene);
-
-		//--------- Timer ---------
-		pTimer->Update();
-		printTimer += pTimer->GetElapsed();
-		if (printTimer >= 1.f)
+		pScene->Update(timer);
+		renderer.Render(pScene);
+		timer.Update();
+		printTimer += timer.GetElapsed();
+		if (printTimer >= 1.0f)
 		{
-			printTimer = 0.f;
-			SDL_SetWindowTitle(pWindow, (title + " - dFPS: " + std::to_string(pTimer->GetdFPS())).c_str());
+			printTimer = 0.0f;
+			SDL_SetWindowTitle(pWindow, (title + " - dFPS: " + std::to_string(timer.GetdFPS())).c_str());
 		}
 
-		//Save screenshot after full render
 		if (takeScreenshot)
 		{
-			if (!pRenderer->SaveBufferToImage())
+			if (!renderer.SaveBufferToImage())
 				std::cout << "Screenshot saved!" << std::endl;
 			else
 				std::cout << "Something went wrong. Screenshot not saved!" << std::endl;
 			takeScreenshot = false;
 		}
 	}
-	pTimer->Stop();
 
-	//Shutdown "framework"
+	timer.Stop();
+
 	delete pScene;
-	delete pRenderer;
-	delete pTimer;
-
 	ShutDown(pWindow);
 	return 0;
 }
