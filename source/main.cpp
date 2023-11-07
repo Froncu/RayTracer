@@ -51,8 +51,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* args[])
 		<< "F3:	 Cycle Lighting Modes\n"
 		<< "F6:      Start Benchmark\n"
 		<< "UP/DOWN: In-/decrement Reflection Bounces\n"
-		<< "SCROLL:  In-/decrease Field Of View\n"
-		<< "--------\n";
+		<< "SCROLL:  In-/decrease Field Of View\n";
 
 	timer.Start();
 
@@ -111,6 +110,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* args[])
 		}
 
 		pScene->Update(timer);
+		if (pScene->GetCamera().DidMove())
+			renderer.ResetAccumulatedReflectionData();
+
 		renderer.Render(pScene);
 		timer.Update();
 		printTimer += timer.GetElapsed();

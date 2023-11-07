@@ -14,20 +14,25 @@ Renderer::Renderer(SDL_Window* const pWindow) :
 
 	m_LightingMode{ LightingMode::combined },
 
-	m_ReflectionBounceAmount{ 1 },
+	m_ReflectionBounceAmount{ 5 },
 
 	m_CastShadows{ true },
 	m_Reflect{},
 
-	m_PixelsX{}
+	m_PixelsX{},
+
+	m_vAccumulatedReflectionData{},
+	m_FrameIndex{ 1 }
 {
 	SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
 
 	for (float pixelX{ 0.5f }; pixelX < m_Width; ++pixelX)
 		m_PixelsX.push_back(pixelX);
+
+	m_vAccumulatedReflectionData.resize(m_Width * m_Height);
 }
 
-void Renderer::Render(const Scene* const pScene) const
+void Renderer::Render(const Scene* const pScene)
 {
 	const Camera& camera = pScene->GetCamera();
 	const auto& vpMaterials{ pScene->GetMaterials() };
@@ -42,10 +47,8 @@ void Renderer::Render(const Scene* const pScene) const
 	const Vector3& cameraOrigin{ camera.GetOrigin() };
 	const Matrix& cameraToWorld{ camera.CalculateCameraToWorld() };
 
-	const int maxReflectionBounceAmount{ m_Reflect ? m_ReflectionBounceAmount : 0 };
-
 	std::for_each(std::execution::par, m_PixelsX.begin(), m_PixelsX.end(),
-		[this, pScene, &vpMaterials, &vLights, fieldOfViewValue, aspectRatioTimesFieldOfViewValue, multiplierXValue, multiplierYValue, &cameraOrigin, &cameraToWorld, maxReflectionBounceAmount]
+		[this, pScene, &vpMaterials, &vLights, fieldOfViewValue, aspectRatioTimesFieldOfViewValue, multiplierXValue, multiplierYValue, &cameraOrigin, &cameraToWorld]
 		(float px)
 		{
 			Vector3 rayDirection;
@@ -56,13 +59,15 @@ void Renderer::Render(const Scene* const pScene) const
 			{
 				rayDirection.y = (1.0f - py * multiplierYValue) * fieldOfViewValue;
 
+				const int currentPixelIndex{ int(px) + (int(py) * m_Width) };
+
 				Ray viewRay;
 				viewRay.origin = cameraOrigin;
 				viewRay.direction = cameraToWorld.TransformVector(rayDirection.GetNormalized());
 
 				ColorRGB finalColor{};
 				float colorFragmentLeftToUse{ 1.0f };
-				for (int reflectionBounceAmount{ 0 }; reflectionBounceAmount <= maxReflectionBounceAmount; ++reflectionBounceAmount)
+				for (int reflectionBounceAmount{ 0 }; reflectionBounceAmount <= m_ReflectionBounceAmount; ++reflectionBounceAmount)
 				{
 					HitRecord closestHit;
 					pScene->GetClosestHit(viewRay, closestHit);
@@ -70,8 +75,7 @@ void Renderer::Render(const Scene* const pScene) const
 					{
 						const Material* const pHitMaterial{ vpMaterials[closestHit.materialIndex] };
 						const float colorFragmentUsed{ m_Reflect ? (colorFragmentLeftToUse * pHitMaterial->m_Roughness) : 1.0f };
-						if (m_Reflect)
-							colorFragmentLeftToUse -= colorFragmentUsed;
+						colorFragmentLeftToUse -= colorFragmentUsed;
 
 						for (const Light& light : vLights)
 						{
@@ -86,6 +90,8 @@ void Renderer::Render(const Scene* const pScene) const
 								continue;
 
 							const float dotLightDirectionNormal{ std::max(Vector3::Dot(lightRay.direction, closestHit.normal), 0.0f) };
+							const ColorRGB radiance{ GetRadiance(light, closestHit.origin) };
+							const ColorRGB BRDF{ pHitMaterial->Shade(closestHit, lightRay.direction, viewRay.direction) };
 
 							switch (m_LightingMode)
 							{
@@ -98,45 +104,53 @@ void Renderer::Render(const Scene* const pScene) const
 							case Renderer::LightingMode::radiance:
 								finalColor +=
 									colorFragmentUsed *
-									GetRadiance(light, closestHit.origin);
+									radiance;
 								break;
 
 							case Renderer::LightingMode::BRDF:
 								finalColor +=
 									colorFragmentUsed *
-									pHitMaterial->Shade(closestHit, lightRay.direction, viewRay.direction);
+									(m_Reflect ? BRDF.GetMaxToOne() : BRDF);
 								break;
 
 							case Renderer::LightingMode::combined:
 								finalColor +=
 									colorFragmentUsed *
 									dotLightDirectionNormal *
-									GetRadiance(light, closestHit.origin) *
-									pHitMaterial->Shade(closestHit, lightRay.direction, viewRay.direction);
+									radiance *
+									(m_Reflect ? BRDF.GetMaxToOne() : BRDF);
 								break;
 							}
 						}
 
-						if (colorFragmentLeftToUse <= FLT_EPSILON)
+						if (m_Reflect && colorFragmentLeftToUse >= FLT_EPSILON)
+						{
+							viewRay.direction = (Vector3::Reflect(viewRay.direction, closestHit.normal) + pHitMaterial->m_Roughness * Vector3::GetRandom(-pHitMaterial->m_Roughness, pHitMaterial->m_Roughness)).GetNormalized();
+							viewRay.origin = closestHit.origin;
+						}
+						else
 							break;
-
-						viewRay.direction = Vector3::Reflect(viewRay.direction, closestHit.normal);
-						viewRay.origin = closestHit.origin;
 					}
 				}
 
-				//Update Color in Buffer
+				if (m_Reflect)
+				{
+					m_vAccumulatedReflectionData[currentPixelIndex] += finalColor;
+					finalColor = m_vAccumulatedReflectionData[currentPixelIndex] / m_FrameIndex;
+				}
+
 				finalColor.MaxToOne();
 
-				m_pBufferPixels[int(px) + (int(py) * m_Width)] = SDL_MapRGB(m_pBuffer->format,
+				m_pBufferPixels[currentPixelIndex] = SDL_MapRGB(m_pBuffer->format,
 					static_cast<uint8_t>(finalColor.red * 255),
 					static_cast<uint8_t>(finalColor.green * 255),
 					static_cast<uint8_t>(finalColor.blue * 255));
 			}
 		});
 
-	//@END
-	//Update SDL Surface
+	if (m_Reflect)
+		++m_FrameIndex;
+
 	SDL_UpdateWindowSurface(m_pWindow);
 }
 
@@ -152,37 +166,46 @@ void Renderer::CycleLightingMode()
 	switch (m_LightingMode)
 	{
 	case Renderer::LightingMode::observedArea:
-		std::cout << "--------\n" << "LIGHTING MODE: Observed Area\n" << "--------\n";
+		std::cout << "--------\n" << "LIGHTING MODE: Observed Area\n";
 			break;
 
 	case Renderer::LightingMode::radiance:
-		std::cout << "--------\n" << "LIGHTING MODE: Radiance\n" << "--------\n";
+		std::cout << "--------\n" << "LIGHTING MODE: Radiance\n";
 			break;
 
 	case Renderer::LightingMode::BRDF:
-		std::cout << "--------\n" << "LIGHTING MODE: BRDF\n" << "--------\n";
+		std::cout << "--------\n" << "LIGHTING MODE: BRDF\n";
 			break;
 
 	case Renderer::LightingMode::combined:
-		std::cout << "--------\n" << "LIGHTING MODE: Combined\n" << "--------\n";
+		std::cout << "--------\n" << "LIGHTING MODE: Combined\n";
 		break;
 	}
+
+	ResetAccumulatedReflectionData();
 }
 
 void Renderer::ToggleShadows()
 {
 	m_CastShadows = !m_CastShadows;
-	std::cout << "--------\n" << "SHADOWS: " << std::boolalpha << m_CastShadows << "\n--------\n";
+	std::cout << "--------\n" << "SHADOWS: " << std::boolalpha << m_CastShadows << std::endl;
+
+	ResetAccumulatedReflectionData();
 }
 
 void Renderer::ToggleReflections()
 {
 	m_Reflect = !m_Reflect;
-	std::cout << "--------\n" << "REFLECTIONS: " << std::boolalpha << m_Reflect << "\n--------\n";
+	std::cout << "--------\n" << "REFLECTIONS: " << std::boolalpha << m_Reflect << std::endl;
+
+	ResetAccumulatedReflectionData();
 }
+
 
 void Renderer::IncrementReflectionBounceAmount(int incrementer)
 {
 	m_ReflectionBounceAmount = std::max(m_ReflectionBounceAmount + incrementer, 1);
-	std::cout << "--------\n" << "REFLECTIONS BOUNCE AMOUNT: " << m_ReflectionBounceAmount << "\n--------\n";
+	std::cout << "--------\n" << "REFLECTIONS BOUNCE AMOUNT: " << m_ReflectionBounceAmount << std::endl;
+
+	ResetAccumulatedReflectionData();
 }

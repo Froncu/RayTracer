@@ -14,9 +14,11 @@ Camera::Camera(const Vector3& origin, float fieldOfViewAngle) :
 	m_TotalPitch{}, m_TargetPitch{},
 	m_TotalYaw{}, m_TargetYaw{},
 
-	m_SmoothFactor{ 8.0f },
+	m_SmoothFactor{ 10.0f },
 
-	m_CameraToWorld{ CalculateCameraToWorld() }
+	m_CameraToWorld{ CalculateCameraToWorld() },
+
+	m_DidMove{}
 {
 }
 
@@ -34,6 +36,8 @@ void Camera::Update(const Timer& timer)
 		deltaTime{ timer.GetElapsed() },
 		fieldOfViewScalar{ std::min(m_FieldOfViewAngle / DEFAULT_FIELD_OF_VIEW_ANGLE, 1.0f) };
 
+	m_DidMove = false;
+
 	//	Mouse Input
 	int mouseX, mouseY;
 	const uint32_t mouseState{ SDL_GetRelativeMouseState(&mouseX, &mouseY) };
@@ -41,7 +45,7 @@ void Camera::Update(const Timer& timer)
 	switch (mouseState)
 	{
 	case SDL_BUTTON(1):
-		m_TargetOrigin -= MOVEMENT_SPEED * m_ForwardDirection * mouseY;
+		m_TargetOrigin -= MOVEMENT_SPEED * m_ForwardDirection * (mouseY / 10.0f) * deltaTime;
 		m_TargetYaw += TO_RADIANS * ROTATION_SPEED * fieldOfViewScalar * mouseX;
 		break;
 
@@ -72,6 +76,15 @@ void Camera::Update(const Timer& timer)
 	m_TotalYaw = Lerp(m_TotalYaw, m_TargetYaw, m_SmoothFactor * deltaTime);
 	m_TotalPitch = Lerp(m_TotalPitch, m_TargetPitch, m_SmoothFactor * deltaTime);
 	m_FieldOfViewAngle = Lerp(m_FieldOfViewAngle, m_TargetFieldOfViewAngle, m_SmoothFactor * deltaTime);
+
+	if
+		(
+			!AreEqual(m_Origin.GetMagnitude(), m_TargetOrigin.GetMagnitude(), 0.001f) ||
+			!AreEqual(m_TotalYaw, m_TargetYaw, 0.001f) ||
+			!AreEqual(m_TotalPitch, m_TargetPitch, 0.001f) ||
+			!AreEqual(m_FieldOfViewAngle, m_TargetFieldOfViewAngle, 0.001f)
+		)
+		m_DidMove = true;
 
 	m_FieldOfViewValue = tanf(m_FieldOfViewAngle / 2.0f);
 

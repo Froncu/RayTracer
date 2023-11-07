@@ -54,6 +54,11 @@ public:
 		return m_FieldOfViewValue;
 	}
 
+	inline bool DidMove() const
+	{
+		return m_DidMove;
+	}
+
 private:
 	Vector3
 		m_Origin, m_TargetOrigin,
@@ -70,4 +75,6 @@ private:
 	const float m_SmoothFactor;
 
 	Matrix m_CameraToWorld;
+
+	bool m_DidMove;
 };

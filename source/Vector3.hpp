@@ -35,6 +35,16 @@ public:
 		return *this;
 	}
 
+	static Vector3 GetRandom(float minimalComponentsValue, float maximalComponentsValue)
+	{
+		return Vector3
+		(
+			minimalComponentsValue + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (maximalComponentsValue - minimalComponentsValue))),
+			minimalComponentsValue + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (maximalComponentsValue - minimalComponentsValue))),
+			minimalComponentsValue + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (maximalComponentsValue - minimalComponentsValue)))
+		);
+	}
+
 	static inline float Dot(const Vector3& vector1, const Vector3& vector2)
 	{
 		return vector1.x * vector2.x + vector1.y * vector2.y + vector1.z * vector2.z;

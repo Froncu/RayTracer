@@ -1,9 +1,9 @@
 #pragma once
 
-//#include <cstdint>
 #include <vector>
 
 #include "SDL.h"
+#include "ColorRGB.hpp"
 
 class Scene;
 
@@ -18,13 +18,22 @@ public:
 	Renderer& operator=(const Renderer&) = delete;
 	Renderer& operator=(Renderer&&) noexcept = delete;
 
-	void Render(const Scene* const pScene) const;
+	void Render(const Scene* const pScene);
 	bool SaveBufferToImage() const;
 
 	void CycleLightingMode();
 	void ToggleShadows();
 	void ToggleReflections();
 	void IncrementReflectionBounceAmount(int incrementer);
+
+	inline void ResetAccumulatedReflectionData()
+	{
+		if (m_Reflect)
+		{
+			m_FrameIndex = 1;
+			m_vAccumulatedReflectionData.assign(m_Width * m_Height, ColorRGB(0.0f, 0.0f, 0.0f));
+		}
+	}
 
 private:
 	SDL_Window* const m_pWindow;
@@ -52,4 +61,7 @@ private:
 		m_Reflect;
 
 	std::vector<float> m_PixelsX;
+
+	std::vector<ColorRGB> m_vAccumulatedReflectionData;
+	int m_FrameIndex;
 };

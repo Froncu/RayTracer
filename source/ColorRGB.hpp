@@ -10,11 +10,19 @@ public:
 		green,
 		blue;
 
-	inline void MaxToOne()
+	inline ColorRGB GetMaxToOne() const
 	{
 		const float maxValue = std::max(red, std::max(green, blue));
 		if (maxValue > 1.0f)
-			*this /= maxValue;
+			return *this / maxValue;
+
+		return *this;
+	}
+
+	inline ColorRGB& MaxToOne()
+	{
+		*this = GetMaxToOne();
+		return *this;
 	}
 
 	inline ColorRGB operator*(const ColorRGB& color) const
