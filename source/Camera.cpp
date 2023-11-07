@@ -14,7 +14,7 @@ Camera::Camera(const Vector3& origin, float fieldOfViewAngle) :
 	m_TotalPitch{}, m_TargetPitch{},
 	m_TotalYaw{}, m_TargetYaw{},
 
-	m_SmoothFactor{ 1.0f },
+	m_SmoothFactor{ 8.0f },
 
 	m_CameraToWorld{ CalculateCameraToWorld() }
 {
@@ -41,13 +41,13 @@ void Camera::Update(const Timer& timer)
 	switch (mouseState)
 	{
 	case SDL_BUTTON(1):
-		m_TargetOrigin -= MOVEMENT_SPEED * m_ForwardDirection * float(mouseY) * deltaTime;
-		m_TargetYaw += ROTATION_SPEED * fieldOfViewScalar * mouseX * deltaTime;
+		m_TargetOrigin -= MOVEMENT_SPEED * m_ForwardDirection * mouseY;
+		m_TargetYaw += TO_RADIANS * ROTATION_SPEED * fieldOfViewScalar * mouseX;
 		break;
 
 	case SDL_BUTTON(3):
-		m_TargetYaw += ROTATION_SPEED * fieldOfViewScalar * mouseX * deltaTime;
-		m_TargetPitch += ROTATION_SPEED * fieldOfViewScalar * mouseY * deltaTime;
+		m_TargetYaw += TO_RADIANS * ROTATION_SPEED * fieldOfViewScalar * mouseX;
+		m_TargetPitch += TO_RADIANS * ROTATION_SPEED * fieldOfViewScalar * mouseY;
 		m_TargetPitch = std::max(-MAX_TOTAL_PITCH, std::min(m_TargetPitch, MAX_TOTAL_PITCH));
 		break;
 	}
@@ -68,10 +68,10 @@ void Camera::Update(const Timer& timer)
 		m_TargetOrigin += MOVEMENT_SPEED * m_RightDirection * deltaTime;
 
 	//	Lerp
-	m_Origin = Lerp(m_Origin, m_TargetOrigin, m_SmoothFactor);
-	m_TotalYaw = Lerp(m_TotalYaw, m_TargetYaw, m_SmoothFactor);
-	m_TotalPitch = Lerp(m_TotalPitch, m_TargetPitch, m_SmoothFactor);
-	m_FieldOfViewAngle = Lerp(m_FieldOfViewAngle, m_TargetFieldOfViewAngle, m_SmoothFactor);
+	m_Origin = Lerp(m_Origin, m_TargetOrigin, m_SmoothFactor * deltaTime);
+	m_TotalYaw = Lerp(m_TotalYaw, m_TargetYaw, m_SmoothFactor * deltaTime);
+	m_TotalPitch = Lerp(m_TotalPitch, m_TargetPitch, m_SmoothFactor * deltaTime);
+	m_FieldOfViewAngle = Lerp(m_FieldOfViewAngle, m_TargetFieldOfViewAngle, m_SmoothFactor * deltaTime);
 
 	m_FieldOfViewValue = tanf(m_FieldOfViewAngle / 2.0f);
 

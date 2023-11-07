@@ -46,11 +46,12 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* args[])
 	std::cout 
 		<< "--------\n"
 		<< "CONTROLS:\n"
-		<< "Toggle Reflections: F1\n"
-		<< "Toggle Shadows: F2\n"
-		<< "Cycle Lighting Modes: F3\n"
-		<< "Cycle Lighting Modes: F6\n"
-		<< "In-/decrement Reflection Bounces: UP/DOWN\n"
+		<< "F1:	 Toggle Reflections\n"
+		<< "F2:	 Toggle Shadows\n"
+		<< "F3:	 Cycle Lighting Modes\n"
+		<< "F6:      Start Benchmark\n"
+		<< "UP/DOWN: In-/decrement Reflection Bounces\n"
+		<< "SCROLL:  In-/decrease Field Of View\n"
 		<< "--------\n";
 
 	timer.Start();
@@ -104,7 +105,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* args[])
 				break;
 
 			case SDL_MOUSEWHEEL:
-				pScene->GetCamera().IncrementFieldOfViewAngle(-float(event.wheel.y) / 20.0f);
+				pScene->GetCamera().IncrementFieldOfViewAngle(-float(event.wheel.y) / 10.0f);
 				break;
 			}
 		}

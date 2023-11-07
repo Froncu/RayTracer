@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 #include "Constants.hpp"
 #include "Matrix.hpp"
 #include "Timer.h"
@@ -32,13 +34,14 @@ public:
 
 	inline void SetFieldOfViewAngle(float angle)
 	{
-		static const float MAX_FOV_ANGLE{ TO_RADIANS * 180.0f };
-		m_TargetFieldOfViewAngle = std::max(0.0f, std::min(angle, MAX_FOV_ANGLE));
+		static const float MAX_FOV_ANGLE{ TO_RADIANS * 180.0f - FLT_EPSILON };
+		m_TargetFieldOfViewAngle = std::max(FLT_EPSILON, std::min(angle, MAX_FOV_ANGLE));
 	}
 
 	inline void IncrementFieldOfViewAngle(float angleIncrementer)
 	{
 		SetFieldOfViewAngle(m_FieldOfViewAngle + angleIncrementer);
+		std::cout << "--------\n" << "FIELD OF VIEW ANGLE: " << TO_DEGREES * m_FieldOfViewAngle << " degrees\n--------\n";
 	}
 
 	inline const Vector3& GetOrigin() const
