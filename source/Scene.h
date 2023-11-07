@@ -63,8 +63,6 @@ protected:
 	Plane* const AddPlane(const Plane& plane);
 	TriangleMesh* const AddTriangleMesh(const TriangleMesh& triangleMesh);
 
-	std::vector<TriangleMesh> m_vTriangleMeshes;
-
 private:
 	std::string	m_SceneName;
 
@@ -74,7 +72,7 @@ private:
 
 	std::vector<Sphere> m_vSpheres;
 	std::vector<Plane> m_vPlanes;
-	//std::vector<TriangleMesh> m_vTriangleMeshes;
+	std::vector<TriangleMesh> m_vTriangleMeshes;
 };
 
 class SceneWeek1 final : public Scene
@@ -126,8 +124,8 @@ public:
 
 	virtual void Update(const Timer& timer) override;
 
-//private:
-	//TriangleMesh* m_apTriangleMeshes[3];
+private:
+	TriangleMesh* m_apTriangleMeshes[3];
 };
 
 class SceneWeek4Bunny final : public Scene

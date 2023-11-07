@@ -14,6 +14,12 @@ Scene::Scene(const std::string& sceneName, const Camera& camera) :
 	m_vPlanes{},
 	m_vTriangleMeshes{}
 {
+	m_vpMaterials.reserve(32);
+	m_vLights.reserve(32);
+
+	m_vSpheres.reserve(32);
+	m_vPlanes.reserve(32);
+	m_vTriangleMeshes.reserve(32);
 }
 
 Scene::~Scene()
@@ -165,8 +171,6 @@ SceneWeek3::SceneWeek3() :
 
 SceneWeek4::SceneWeek4() :
 	Scene("Week 4", Camera(Vector3(0.0f, 3.0f, -9.0f)))
-
-	//,m_apTriangleMeshes{}
 {
 	const unsigned char
 		cookTorrenceGrayRoughMetal{ AddMaterial(new CookTorrenceMaterial({ .972f, .960f, .915f }, 1.f, 1.f)) },
@@ -217,8 +221,7 @@ SceneWeek4::SceneWeek4() :
 		pTriangleMesh->AppendTriangle(baseTriangle);
 		pTriangleMesh->SetTranslator(Vector3(-1.75f, 4.5f, 0.0f) + float(index) * offset);
 		pTriangleMesh->UpdateTransforms();
-
-		//m_apTriangleMeshes[index] = pTriangleMesh;
+		m_apTriangleMeshes[index] = pTriangleMesh;
 	}
 
 	AddLight(Light(Vector3(0.0f, 5.0f, 5.0f), 50.0f, ColorRGB(1.0f, 0.61f, 0.45f))); //Backlight
@@ -232,16 +235,10 @@ void SceneWeek4::Update(const Timer& timer)
 
 	const float yawAngle{ (cos(timer.GetTotal()) + 1.0f) / 2.0f * DOUBLE_PI };
 
-	//for (TriangleMesh* const pTriangleMesh : m_apTriangleMeshes)
-	//{
-	//	pTriangleMesh->SetRotorY(yawAngle);
-	//	pTriangleMesh->UpdateTransforms();
-	//}
-
-	for (TriangleMesh& triangleMesh : m_vTriangleMeshes)
+	for (TriangleMesh* const pTriangleMesh : m_apTriangleMeshes)
 	{
-		triangleMesh.SetRotorY(yawAngle);
-		triangleMesh.UpdateTransforms();
+		pTriangleMesh->SetRotorY(yawAngle);
+		pTriangleMesh->UpdateTransforms();
 	}
 }
 
