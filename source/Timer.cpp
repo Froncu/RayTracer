@@ -5,6 +5,7 @@
 #include <fstream>
 
 #include "SDL.h"
+#include "Constants.hpp"
 
 Timer::Timer()
 {
@@ -42,7 +43,12 @@ void Timer::StartBenchmark(int numFrames)
 {
 	if (m_BenchmarkActive)
 	{
-		std::cout << "(Benchmark already running)";
+		system("CLS");
+		std::cout
+			<< CONTROLS
+			<< "--------\n"
+			<< "BENCHMARK ALREADY RUNNING\n"
+			<< "--------\n";
 		return;
 	}
 
@@ -58,7 +64,12 @@ void Timer::StartBenchmark(int numFrames)
 	m_Benchmarks.clear();
 	m_Benchmarks.resize(m_BenchmarkFrames);
 
-	std::cout << "**BENCHMARK STARTED**\n";
+	system("CLS");
+	std::cout
+		<< CONTROLS
+		<< "--------\n"
+		<< "BENCHMARK STARTED\n"
+		<< "--------\n";
 }
 
 void Timer::Update()
@@ -111,10 +122,15 @@ void Timer::Update()
 				m_BenchmarkAvg = std::accumulate(m_Benchmarks.begin(), m_Benchmarks.end(), 0.f) / float(m_BenchmarkFrames);
 
 				//print
-				std::cout << "**BENCHMARK FINISHED**\n";
-				std::cout << ">> HIGH = " << m_BenchmarkHigh << std::endl;
-				std::cout << ">> LOW = " << m_BenchmarkLow << std::endl;
-				std::cout << ">> AVG = " << m_BenchmarkAvg << std::endl;
+				system("CLS");
+				std::cout
+					<< CONTROLS
+					<< "--------\n"
+					<< "BENCHMARK FINISHED\n"
+					<< ">> HIGH = " << m_BenchmarkHigh << std::endl
+					<< ">> LOW = " << m_BenchmarkLow << std::endl
+					<< ">> AVG = " << m_BenchmarkAvg << std::endl
+					<< "--------\n";
 
 				//file save
 				std::ofstream fileStream("benchmark.txt");

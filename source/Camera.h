@@ -41,7 +41,11 @@ public:
 	inline void IncrementFieldOfViewAngle(float angleIncrementer)
 	{
 		SetFieldOfViewAngle(m_FieldOfViewAngle + angleIncrementer);
-		std::cout << "--------\n" << "FIELD OF VIEW ANGLE: " << TO_DEGREES * m_FieldOfViewAngle << " degrees\n--------\n";
+		system("CLS");
+		std::cout
+			<< CONTROLS
+			<< "--------\n" 
+			<< "FIELD OF VIEW ANGLE: " << TO_DEGREES * m_FieldOfViewAngle << " degrees\n--------";
 	}
 
 	inline const Vector3& GetOrigin() const

@@ -166,19 +166,39 @@ void Renderer::CycleLightingMode()
 	switch (m_LightingMode)
 	{
 	case Renderer::LightingMode::observedArea:
-		std::cout << "--------\n" << "LIGHTING MODE: Observed Area\n";
-			break;
+		system("CLS");
+		std::cout
+			<< CONTROLS
+			<< "--------\n" 
+			<< "LIGHTING MODE: Observed Area\n"
+			<< "--------\n";
+		break;
 
 	case Renderer::LightingMode::radiance:
-		std::cout << "--------\n" << "LIGHTING MODE: Radiance\n";
-			break;
+		system("CLS");
+		std::cout
+			<< CONTROLS
+			<< "--------\n"
+			<< "LIGHTING MODE: Radiance\n"
+			<< "--------\n";
+		break;
 
 	case Renderer::LightingMode::BRDF:
-		std::cout << "--------\n" << "LIGHTING MODE: BRDF\n";
-			break;
+		system("CLS");
+		std::cout
+			<< CONTROLS
+			<< "--------\n"
+			<< "LIGHTING MODE: BRDF\n"
+			<< "--------\n";
+		break;
 
 	case Renderer::LightingMode::combined:
-		std::cout << "--------\n" << "LIGHTING MODE: Combined\n";
+		system("CLS");
+		std::cout
+			<< CONTROLS
+			<< "--------\n"
+			<< "LIGHTING MODE: Combined\n"
+			<< "--------\n";
 		break;
 	}
 
@@ -188,7 +208,12 @@ void Renderer::CycleLightingMode()
 void Renderer::ToggleShadows()
 {
 	m_CastShadows = !m_CastShadows;
-	std::cout << "--------\n" << "SHADOWS: " << std::boolalpha << m_CastShadows << std::endl;
+	system("CLS");
+	std::cout
+		<< CONTROLS 
+		<< "--------\n"
+		<< "SHADOWS: " << std::boolalpha << m_CastShadows << std::endl
+		<< "--------\n";
 
 	ResetAccumulatedReflectionData();
 }
@@ -196,7 +221,12 @@ void Renderer::ToggleShadows()
 void Renderer::ToggleReflections()
 {
 	m_Reflect = !m_Reflect;
-	std::cout << "--------\n" << "REFLECTIONS: " << std::boolalpha << m_Reflect << std::endl;
+	system("CLS");
+	std::cout
+		<< CONTROLS
+		<< "--------\n"
+		<< "REFLECTIONS: " << std::boolalpha << m_Reflect << std::endl
+		<< "--------\n";
 
 	ResetAccumulatedReflectionData();
 }
@@ -205,7 +235,12 @@ void Renderer::ToggleReflections()
 void Renderer::IncrementReflectionBounceAmount(int incrementer)
 {
 	m_ReflectionBounceAmount = std::max(m_ReflectionBounceAmount + incrementer, 1);
-	std::cout << "--------\n" << "REFLECTIONS BOUNCE AMOUNT: " << m_ReflectionBounceAmount << std::endl;
+	system("CLS");
+	std::cout
+		<< CONTROLS
+		<< "--------\n"
+		<< "REFLECTIONS BOUNCE AMOUNT: " << m_ReflectionBounceAmount << std::endl
+		<< "--------\n";
 
 	ResetAccumulatedReflectionData();
 }

@@ -1,5 +1,18 @@
 #pragma once
 
+constexpr char CONTROLS[]
+{
+	"--------\n"
+	"CONTROLS:\n"
+	"F1:	 Toggle Reflections\n"
+	"F2:	 Toggle Shadows\n"
+	"F3:	 Cycle Lighting Modes\n"
+	"F6:      Start Benchmark\n"
+	"UP/DOWN: In-/decrement Reflection Bounces\n"
+	"SCROLL:  In-/decrease Field Of View\n"
+	"X:       Take Screenshot\n"
+};
+
 constexpr float
 PI{ 3.14159265358979323846f },
 HALF_PI{ 1.57079632679489661923f },

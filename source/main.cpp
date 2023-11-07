@@ -6,6 +6,7 @@
 #include "Timer.h"
 #include "Renderer.h"
 #include "Scene.h"
+#include "Constants.hpp"
 
 void ShutDown(SDL_Window* pWindow)
 {
@@ -43,15 +44,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* args[])
 		new SceneWeek4();
 		//new SceneWeek4Bunny();
 
-	std::cout 
-		<< "--------\n"
-		<< "CONTROLS:\n"
-		<< "F1:	 Toggle Reflections\n"
-		<< "F2:	 Toggle Shadows\n"
-		<< "F3:	 Cycle Lighting Modes\n"
-		<< "F6:      Start Benchmark\n"
-		<< "UP/DOWN: In-/decrement Reflection Bounces\n"
-		<< "SCROLL:  In-/decrease Field Of View\n";
+	std::cout << CONTROLS;
 
 	timer.Start();
 
@@ -126,9 +119,24 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* args[])
 		if (takeScreenshot)
 		{
 			if (!renderer.SaveBufferToImage())
-				std::cout << "Screenshot saved!" << std::endl;
+			{
+				system("CLS");
+				std::cout
+					<< CONTROLS
+					<< "--------\n"
+					<< "SCREENSHOT SAVED\n"
+					<< "--------\n";
+			}
 			else
-				std::cout << "Something went wrong. Screenshot not saved!" << std::endl;
+			{
+				system("CLS");
+				std::cout
+					<< CONTROLS
+					<< "--------\n"
+					<< "SCREENSHOT ERROR\n"
+					<< "--------\n";
+			}
+
 			takeScreenshot = false;
 		}
 	}
