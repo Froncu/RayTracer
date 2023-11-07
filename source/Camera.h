@@ -29,13 +29,13 @@ public:
 	inline void SetOrigin(const Vector3& origin)
 	{
 		m_Origin = origin;
-		m_TargetOrigin = m_Origin;
 	}
 
 	inline void SetFieldOfViewAngle(float angle)
 	{
 		static const float MAX_FOV_ANGLE{ TO_RADIANS * 180.0f - FLT_EPSILON };
-		m_TargetFieldOfViewAngle = std::max(FLT_EPSILON, std::min(angle, MAX_FOV_ANGLE));
+		m_FieldOfViewAngle = std::max(FLT_EPSILON, std::min(angle, MAX_FOV_ANGLE));
+		m_FieldOfViewValue = tanf(m_FieldOfViewAngle / 2.0f);
 	}
 
 	inline void IncrementFieldOfViewAngle(float angleIncrementer)
@@ -61,18 +61,16 @@ public:
 
 private:
 	Vector3
-		m_Origin, m_TargetOrigin,
+		m_Origin,
 		m_ForwardDirection,
 		m_RightDirection;
 
 	float
-		m_FieldOfViewAngle, m_TargetFieldOfViewAngle,
+		m_FieldOfViewAngle,
 		m_FieldOfViewValue,
 
-		m_TotalPitch, m_TargetPitch,
-		m_TotalYaw, m_TargetYaw;
-
-	const float m_SmoothFactor;
+		m_TotalPitch,
+		m_TotalYaw;
 
 	Matrix m_CameraToWorld;
 

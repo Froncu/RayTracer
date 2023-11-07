@@ -104,7 +104,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* args[])
 				break;
 
 			case SDL_MOUSEWHEEL:
-				pScene->GetCamera().IncrementFieldOfViewAngle(-float(event.wheel.y) / 10.0f);
+				pScene->GetCamera().IncrementFieldOfViewAngle(-float(event.wheel.y) / 20.0f);
+				renderer.ResetAccumulatedReflectionData();
 				break;
 			}
 		}
