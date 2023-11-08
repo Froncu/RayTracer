@@ -30,7 +30,7 @@ public:
 	{
 		if (m_Reflect)
 		{
-			m_FrameIndex = 1;
+			m_vFrameIndices.assign(m_Width * m_Height, 1);
 			m_vAccumulatedReflectionData.assign(m_Width * m_Height, ColorRGB(0.0f, 0.0f, 0.0f));
 		}
 	}
@@ -63,5 +63,5 @@ private:
 	std::vector<float> m_PixelsX;
 
 	std::vector<ColorRGB> m_vAccumulatedReflectionData;
-	int m_FrameIndex;
+	std::vector<int> m_vFrameIndices;
 };

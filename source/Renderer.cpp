@@ -22,7 +22,7 @@ Renderer::Renderer(SDL_Window* const pWindow) :
 	m_PixelsX{},
 
 	m_vAccumulatedReflectionData{},
-	m_FrameIndex{ 1 }
+	m_vFrameIndices{}
 {
 	SDL_GetWindowSize(pWindow, &m_Width, &m_Height);
 
@@ -30,6 +30,7 @@ Renderer::Renderer(SDL_Window* const pWindow) :
 		m_PixelsX.push_back(pixelX);
 
 	m_vAccumulatedReflectionData.resize(m_Width * m_Height);
+	m_vFrameIndices.resize(m_Width * m_Height, 1);
 }
 
 void Renderer::Render(const Scene* const pScene)
@@ -65,6 +66,7 @@ void Renderer::Render(const Scene* const pScene)
 				viewRay.origin = cameraOrigin;
 				viewRay.direction = cameraToWorld.TransformVector(rayDirection.GetNormalized());
 
+				bool didHitDynamic{};
 				ColorRGB finalColor{};
 				float colorFragmentLeftToUse{ 1.0f };
 				for (int reflectionBounceAmount{ 0 }; reflectionBounceAmount <= m_ReflectionBounceAmount; ++reflectionBounceAmount)
@@ -73,6 +75,9 @@ void Renderer::Render(const Scene* const pScene)
 					pScene->GetClosestHit(viewRay, closestHit);
 					if (closestHit.didHit)
 					{
+						if (closestHit.isDynamic)
+							didHitDynamic = true;
+
 						const Material* const pHitMaterial{ vpMaterials[closestHit.materialIndex] };
 						const float colorFragmentUsed{ m_Reflect ? (colorFragmentLeftToUse * pHitMaterial->m_Roughness) : 1.0f };
 						colorFragmentLeftToUse -= colorFragmentUsed;
@@ -135,8 +140,15 @@ void Renderer::Render(const Scene* const pScene)
 
 				if (m_Reflect)
 				{
-					m_vAccumulatedReflectionData[currentPixelIndex] += finalColor;
-					finalColor = m_vAccumulatedReflectionData[currentPixelIndex] / m_FrameIndex;
+					if (didHitDynamic)
+					{
+						m_vAccumulatedReflectionData[currentPixelIndex] = finalColor;
+						m_vFrameIndices[currentPixelIndex] = 1;
+					}
+					else
+						m_vAccumulatedReflectionData[currentPixelIndex] += finalColor;
+
+					finalColor = m_vAccumulatedReflectionData[currentPixelIndex] / m_vFrameIndices[currentPixelIndex]++;
 				}
 
 				finalColor.MaxToOne();
@@ -147,9 +159,6 @@ void Renderer::Render(const Scene* const pScene)
 					static_cast<uint8_t>(finalColor.blue * 255));
 			}
 		});
-
-	if (m_Reflect)
-		++m_FrameIndex;
 
 	SDL_UpdateWindowSurface(m_pWindow);
 }

@@ -295,6 +295,7 @@ SceneExtra::SceneExtra() :
 	TriangleMesh* const pTriangleMesh{ AddTriangleMesh(TriangleMesh("Resources/lowpoly_bunny.obj", medium)) };
 	pTriangleMesh->SetScalar(2.0f);
 	pTriangleMesh->UpdateTransforms();
+	pTriangleMesh->ToggleDynamic();
 
 	AddLight(Light(Vector3(0.0f, 5.0f, 5.0f), 50.0f, ColorRGB(1.0f, 1.0f, 1.0f))); //Backlight
 	AddLight(Light(Vector3(-2.5f, 5.0f, -5.0f), 70.0f, ColorRGB(1.0f, 1.0f, 1.0f))); //Front Light Left

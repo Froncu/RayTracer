@@ -249,6 +249,9 @@ inline bool HitTestTriangleMesh(const TriangleMesh& triangleMesh, const Ray& ray
 		}
 	}
 
+	if (didHit)
+		hitRecord.isDynamic = triangleMesh.isDynamic;
+
 	return didHit;
 }
 
