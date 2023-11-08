@@ -14,7 +14,7 @@ Renderer::Renderer(SDL_Window* const pWindow) :
 
 	m_LightingMode{ LightingMode::combined },
 
-	m_ReflectionBounceAmount{ 5 },
+	m_ReflectionBounceAmount{ 3 },
 
 	m_CastShadows{ true },
 	m_Reflect{},
@@ -125,7 +125,7 @@ void Renderer::Render(const Scene* const pScene)
 
 						if (m_Reflect && colorFragmentLeftToUse >= FLT_EPSILON)
 						{
-							viewRay.direction = (Vector3::Reflect(viewRay.direction, closestHit.normal) + pHitMaterial->m_Roughness * Vector3::GetRandom(-pHitMaterial->m_Roughness, pHitMaterial->m_Roughness)).GetNormalized();
+							viewRay.direction = (Vector3::Reflect(viewRay.direction, closestHit.normal) + pHitMaterial->m_Roughness * Vector3::GetRandom(-0.2f, 0.2f)).GetNormalized();
 							viewRay.origin = closestHit.origin;
 						}
 						else
