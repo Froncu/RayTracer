@@ -271,7 +271,7 @@ void SceneWeek4Bunny::Update(const Timer& timer)
 {
 	Scene::Update(timer);
 
-	const float yawAngle{ (cos(timer.GetTotal())) / 2.0f * DOUBLE_PI };
+	const float yawAngle{ (cos(timer.GetTotal()) + 1.0f) / 2.0f * DOUBLE_PI };
 	m_pBunnyTriangleMesh->SetRotorY(yawAngle);
 	m_pBunnyTriangleMesh->UpdateTransforms();
 }
