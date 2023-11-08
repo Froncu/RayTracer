@@ -212,7 +212,7 @@ SceneWeek4::SceneWeek4() :
 			cullMode = Triangle::CullMode::frontFace;
 			break;
 
-		case 2:
+		default:
 			cullMode = Triangle::CullMode::none;
 			break;
 		}

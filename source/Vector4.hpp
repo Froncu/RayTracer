@@ -140,7 +140,7 @@ public:
 		case 2:
 			return z;
 
-		case 3:
+		default:
 			return w;
 		}
 	}
@@ -158,7 +158,7 @@ public:
 		case 2:
 			return z;
 
-		case 3:
+		default:
 			return w;
 		}
 	}

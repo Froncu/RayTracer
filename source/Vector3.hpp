@@ -217,7 +217,7 @@ public:
 		case 1:
 			return y;
 
-		case 2:
+		default:
 			return z;
 		}
 	}
@@ -232,7 +232,7 @@ public:
 		case 1:
 			return y;
 
-		case 2:
+		default:
 			return z;
 		}
 	}

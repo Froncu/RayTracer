@@ -148,7 +148,7 @@ void Renderer::Render(const Scene* const pScene)
 					else
 						m_vAccumulatedReflectionData[currentPixelIndex] += finalColor;
 
-					finalColor = m_vAccumulatedReflectionData[currentPixelIndex] / m_vFrameIndices[currentPixelIndex]++;
+					finalColor = m_vAccumulatedReflectionData[currentPixelIndex] / float(m_vFrameIndices[currentPixelIndex]++);
 				}
 
 				finalColor.MaxToOne();

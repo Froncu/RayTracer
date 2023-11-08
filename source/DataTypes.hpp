@@ -131,21 +131,21 @@ public:
 		isDynamic = !isDynamic;
 	}
 
-	inline void SetTranslator(const Vector3& translator)
+	inline void SetTranslator(const Vector3& _translator)
 	{
-		this->translator = Matrix::CreateTranslator(translator);
+		this->translator = Matrix::CreateTranslator(_translator);
 		finalTransform = scalar * rotor * this->translator;
 	}
 
-	inline void SetRotorY(float yaw)
+	inline void SetRotorY(float _yaw)
 	{
-		rotor = Matrix::CreateRotorY(yaw);
+		rotor = Matrix::CreateRotorY(_yaw);
 		finalTransform = scalar * rotor * translator;
 	}
 
-	inline void SetScalar(float scalar)
+	inline void SetScalar(float _scalar)
 	{
-		this->scalar = Matrix::CreateScalar(scalar);
+		this->scalar = Matrix::CreateScalar(_scalar);
 		finalTransform = this->scalar * rotor * translator;
 	}
 
