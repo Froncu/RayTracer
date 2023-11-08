@@ -275,3 +275,28 @@ void SceneWeek4Bunny::Update(const Timer& timer)
 	m_pBunnyTriangleMesh->SetRotorY(yawAngle);
 	m_pBunnyTriangleMesh->UpdateTransforms();
 }
+
+SceneExtra::SceneExtra() :
+	Scene("Extra Scene", Camera(Vector3(0.0f, 3.0f, -9.0f)))
+{
+	const unsigned char
+		mirror{ AddMaterial(new CookTorrenceMaterial({ 1.0f,  1.0f,  1.0f }, 0.f, 0.0f)) },
+		smooth{ AddMaterial(new CookTorrenceMaterial({ 1.0f,  0.0f,  1.0f }, 0.f, 0.2f)) },
+		medium{ AddMaterial(new CookTorrenceMaterial({ 1.0f,  1.0f,  0.0f }, 0.f, 0.5f)) },
+		rough{ AddMaterial(new CookTorrenceMaterial({ 0.0f,  1.0f,  1.0f }, 0.f, 0.4f)) },
+		lambertWhite{ AddMaterial(new LambertMaterial(WHITE, 1.0f)) };
+
+	AddPlane(Plane(Vector3(0.0f, 0.0f, 10.0f), Vector3(0.0f, 0.0f, -1.0f), mirror)); //BACK
+	AddPlane(Plane(Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f), smooth)); //BOTTOM
+	AddPlane(Plane(Vector3(0.0f, 10.0f, 0.0f), Vector3(0.0f, -1.0f, 0.0f), medium)); //TOP
+	AddPlane(Plane(Vector3(5.0f, 0.0f, 0.0f), Vector3(-1.0f, 0.0f, 0.0), rough)); //RIGHT
+	AddPlane(Plane(Vector3(-5.0f, 0.0f, 0.0f), Vector3(1.0f, 0.0f, 0.0f), rough)); //LEFT
+
+	TriangleMesh* const pTriangleMesh{ AddTriangleMesh(TriangleMesh("Resources/lowpoly_bunny.obj", medium)) };
+	pTriangleMesh->SetScalar(2.0f);
+	pTriangleMesh->UpdateTransforms();
+
+	AddLight(Light(Vector3(0.0f, 5.0f, 5.0f), 50.0f, ColorRGB(1.0f, 1.0f, 1.0f))); //Backlight
+	AddLight(Light(Vector3(-2.5f, 5.0f, -5.0f), 70.0f, ColorRGB(1.0f, 1.0f, 1.0f))); //Front Light Left
+	AddLight(Light(Vector3(2.5f, 2.5f, -5.0f), 50.0f, ColorRGB(1.0f, 1.0f, 1.0f)));
+}

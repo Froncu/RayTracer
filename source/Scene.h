@@ -144,3 +144,15 @@ public:
 private:
 	TriangleMesh* m_pBunnyTriangleMesh;
 };
+
+class SceneExtra final : public Scene
+{
+public:
+	SceneExtra();
+	virtual ~SceneExtra() override = default;
+
+	SceneExtra(const SceneExtra&) = delete;
+	SceneExtra(SceneExtra&&) noexcept = delete;
+	SceneExtra& operator=(const SceneExtra&) = delete;
+	SceneExtra& operator=(SceneExtra&&) noexcept = delete;
+};

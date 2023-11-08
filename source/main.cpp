@@ -41,8 +41,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* args[])
 		//new SceneWeek1();
 		//new SceneWeek2();
 		//new SceneWeek3();
-		new SceneWeek4();
+		//new SceneWeek4();
 		//new SceneWeek4Bunny();
+		new SceneExtra();
 
 	std::cout << CONTROLS;
 
