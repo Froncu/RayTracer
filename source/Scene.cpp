@@ -3,7 +3,7 @@
 #include "Utilities.hpp"
 #include "Materials.hpp"
 
-Scene::Scene(const std::string& sceneName, const Camera& camera) :
+Scene::Scene(const std::string& sceneName, const Camera& camera, const Renderer::Settings& initialRendererSettings) :
 	m_SceneName{ sceneName },
 
 	m_Camera{ camera },
@@ -12,7 +12,9 @@ Scene::Scene(const std::string& sceneName, const Camera& camera) :
 
 	m_vSpheres{},
 	m_vPlanes{},
-	m_vTriangleMeshes{}
+	m_vTriangleMeshes{},
+
+	m_InitialRendererSettings{ initialRendererSettings }
 {
 	m_vpMaterials.reserve(32);
 	m_vLights.reserve(32);
@@ -93,7 +95,7 @@ TriangleMesh* const Scene::AddTriangleMesh(const TriangleMesh& triangleMesh)
 }
 
 SceneWeek1::SceneWeek1() :
-	Scene("Week 1", Camera(Vector3(0.0f, 0.0f, 0.0f)))
+	Scene("Week 1")
 {
 	const unsigned char matId_Solid_Red = AddMaterial(new SolidColorMaterial{ RED });
 	const unsigned char matId_Solid_Blue = AddMaterial(new SolidColorMaterial{ BLUE });
@@ -277,18 +279,19 @@ void SceneWeek4Bunny::Update(const Timer& timer)
 }
 
 SceneExtra::SceneExtra() :
-	Scene("Extra Scene", Camera(Vector3(0.0f, 3.0f, -9.0f)))
+	Scene("Extra Scene", Camera(Vector3(0.0f, 2.0f, -12.0f), TO_RADIANS * 70.0f), Renderer::Settings(Renderer::Settings::LightingMode::combined, false, true, 5))
 {
 	const unsigned char
 		mirror{ AddMaterial(new CookTorrenceMaterial({ 1.0f,  1.0f,  1.0f }, 0.0f, 0.0f)) },
-		smootherCyan{ AddMaterial(new CookTorrenceMaterial({ 0.0f,  1.0f,  1.0f }, 0.0f, 0.1f)) },
-		smoothPink{ AddMaterial(new CookTorrenceMaterial({ 1.0f,  0.0f,  1.0f }, 0.0f, 0.2f)) },
-		roughYellow{ AddMaterial(new CookTorrenceMaterial({ 1.0f,  1.0f,  0.0f }, 0.0f, 0.4f)) };
+		smootherCyan{ AddMaterial(new CookTorrenceMaterial({ 0.0f,  1.0f,  1.0f }, 0.0f, 0.2f)) },
+		smoothPink{ AddMaterial(new CookTorrenceMaterial({ 1.0f,  0.0f,  1.0f }, 0.0f, 0.3f)) },
+		roughYellow{ AddMaterial(new CookTorrenceMaterial({ 1.0f,  1.0f,  0.0f }, 0.0f, 0.5f)) };
 
-	AddPlane(Plane(Vector3(0.0f, 0.0f, 7.0f), Vector3(0.0f, 0.0f, -1.0f), smootherCyan)); //BACK
-	AddPlane(Plane(Vector3(0.0f, 0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f), smoothPink)); //BOTTOM
-	AddPlane(Plane(Vector3(0.0f, 10.0f, 0.0f), Vector3(0.0f, -1.0f, 0.0f), roughYellow)); //TOP
-	AddPlane(Plane(Vector3(5.0f, 0.0f, 0.0f), Vector3(-1.0f, 0.0f, 0.0), smootherCyan)); //RIGHT
+	AddSphere(Sphere(Vector3(0.0f, 5.0f, 15.0f), 10.0f, smootherCyan)); //BACK
+	AddSphere(Sphere(Vector3(0.0f, -20.0f, 0.0f), 20.0f, smoothPink)); //BOTTOM
+	AddSphere(Sphere(Vector3(0.0f, 30.0f, 0.0f), 20.0f, roughYellow)); //TOP
+	AddPlane(Plane(Vector3(0.0f, 0.0f, -15.0f), Vector3(0.0f, 0.0f, 1.0f), mirror)); //FRONT
+	AddPlane(Plane(Vector3(5.0f, 0.0f, 0.0f), Vector3(-1.0f, 0.0f, 0.0f), smootherCyan)); //RIGHT
 	AddPlane(Plane(Vector3(-5.0f, 0.0f, 0.0f), Vector3(1.0f, 0.0f, 0.0f), smootherCyan)); //LEFT
 
 	TriangleMesh* const pTriangleMesh{ AddTriangleMesh(TriangleMesh("Resources/lowpoly_bunny.obj", mirror)) };
@@ -297,7 +300,7 @@ SceneExtra::SceneExtra() :
 	pTriangleMesh->UpdateTransforms();
 	pTriangleMesh->ToggleDynamic();
 
-	AddLight(Light(Vector3(2.5f, 2.5f, 5.0f), 70.0f, ColorRGB(1.0f, 1.0f, 1.0f)));
-	AddLight(Light(Vector3(-2.5f, 7.5f, 3.0f), 70.0f, ColorRGB(1.0f, 1.0f, 1.0f)));
-	AddLight(Light(Vector3(0.0f, 2.5f, -10.0f), 100.0f, ColorRGB(1.0f, 1.0f, 1.0f)));
+	AddLight(Light(Vector3(2.5f, 7.5f, 5.0f), 50.0f, ColorRGB(1.0f, 1.0f, 1.0f)));
+	AddLight(Light(Vector3(-2.5f, 5.0f, 0.0f), 50.0f, ColorRGB(1.0f, 1.0f, 1.0f)));
+	AddLight(Light(Vector3(1.0f, 3.0f, -7.5f), 100.0f, ColorRGB(1.0f, 1.0f, 1.0f)));
 }

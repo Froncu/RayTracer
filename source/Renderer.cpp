@@ -7,17 +7,12 @@
 #include "Materials.hpp"
 #include "Utilities.hpp"
 
-Renderer::Renderer(SDL_Window* const pWindow) :
+Renderer::Renderer(SDL_Window* const pWindow, const Settings& initialSettings) :
 	m_pWindow{ pWindow },
 	m_pBuffer{ SDL_GetWindowSurface(pWindow) },
 	m_pBufferPixels{ static_cast<uint32_t*>(m_pBuffer->pixels) },
 
-	m_LightingMode{ LightingMode::combined },
-
-	m_ReflectionBounceAmount{ 3 },
-
-	m_CastShadows{ true },
-	m_Reflect{},
+	m_Settings{ initialSettings },
 
 	m_PixelsX{},
 
@@ -69,7 +64,7 @@ void Renderer::Render(const Scene* const pScene)
 				bool didHitDynamic{};
 				ColorRGB finalColor{};
 				float colorFragmentLeftToUse{ 1.0f };
-				for (int reflectionBounceAmount{ 0 }; reflectionBounceAmount <= m_ReflectionBounceAmount; ++reflectionBounceAmount)
+				for (int reflectionBounceAmount{ 0 }; reflectionBounceAmount <= m_Settings.m_ReflectionBounceAmount; ++reflectionBounceAmount)
 				{
 					HitRecord closestHit;
 					pScene->GetClosestHit(viewRay, closestHit);
@@ -79,7 +74,7 @@ void Renderer::Render(const Scene* const pScene)
 							didHitDynamic = true;
 
 						const Material* const pHitMaterial{ vpMaterials[closestHit.materialIndex] };
-						const float colorFragmentUsed{ m_Reflect ? (colorFragmentLeftToUse * pHitMaterial->m_Roughness) : 1.0f };
+						const float colorFragmentUsed{ m_Settings.m_Reflect ? (colorFragmentLeftToUse * pHitMaterial->m_Roughness) : 1.0f };
 						colorFragmentLeftToUse -= colorFragmentUsed;
 
 						for (const Light& light : vLights)
@@ -91,44 +86,44 @@ void Renderer::Render(const Scene* const pScene)
 							Ray lightRay{ closestHit.origin + RAY_EPSILON * lightVectorNormalized, lightVectorNormalized };
 							lightRay.max = lightVectorMagnitude;
 
-							if (m_CastShadows && pScene->DoesHit(lightRay))
+							if (m_Settings.m_CastShadows && pScene->DoesHit(lightRay))
 								continue;
 
 							const float dotLightDirectionNormal{ std::max(Vector3::Dot(lightRay.direction, closestHit.normal), 0.0f) };
 							const ColorRGB radiance{ GetRadiance(light, closestHit.origin) };
 							const ColorRGB BRDF{ pHitMaterial->Shade(closestHit, lightRay.direction, viewRay.direction) };
 
-							switch (m_LightingMode)
+							switch (m_Settings.m_LightingMode)
 							{
-							case Renderer::LightingMode::observedArea:
+							case Renderer::Settings::LightingMode::observedArea:
 								finalColor +=
 									colorFragmentUsed *
 									dotLightDirectionNormal * WHITE;
 								break;
 
-							case Renderer::LightingMode::radiance:
+							case Renderer::Settings::LightingMode::radiance:
 								finalColor +=
 									colorFragmentUsed *
 									radiance;
 								break;
 
-							case Renderer::LightingMode::BRDF:
+							case Renderer::Settings::LightingMode::BRDF:
 								finalColor +=
 									colorFragmentUsed *
-									(m_Reflect ? BRDF.GetMaxToOne() : BRDF);
+									(m_Settings.m_Reflect ? BRDF.GetMaxToOne() : BRDF);
 								break;
 
-							case Renderer::LightingMode::combined:
+							case Renderer::Settings::LightingMode::combined:
 								finalColor +=
 									colorFragmentUsed *
 									dotLightDirectionNormal *
 									radiance *
-									(m_Reflect ? BRDF.GetMaxToOne() : BRDF);
+									(m_Settings.m_Reflect ? BRDF.GetMaxToOne() : BRDF);
 								break;
 							}
 						}
 
-						if (m_Reflect && colorFragmentLeftToUse >= FLT_EPSILON)
+						if (m_Settings.m_Reflect && colorFragmentLeftToUse >= FLT_EPSILON)
 						{
 							viewRay.direction = (Vector3::Reflect(viewRay.direction, closestHit.normal) + pHitMaterial->m_Roughness * Vector3::GetRandom(-0.2f, 0.2f)).GetNormalized();
 							viewRay.origin = closestHit.origin;
@@ -138,7 +133,7 @@ void Renderer::Render(const Scene* const pScene)
 					}
 				}
 
-				if (m_Reflect)
+				if (m_Settings.m_Reflect)
 				{
 					if (didHitDynamic)
 					{
@@ -170,11 +165,11 @@ bool Renderer::SaveBufferToImage() const
 
 void Renderer::CycleLightingMode()
 {
-	m_LightingMode = LightingMode((int(m_LightingMode) + 1) % int(LightingMode::AMOUNT));
+	m_Settings.m_LightingMode = Settings::LightingMode((int(m_Settings.m_LightingMode) + 1) % int(Settings::LightingMode::AMOUNT));
 
-	switch (m_LightingMode)
+	switch (m_Settings.m_LightingMode)
 	{
-	case Renderer::LightingMode::observedArea:
+	case Renderer::Settings::LightingMode::observedArea:
 		system("CLS");
 		std::cout
 			<< CONTROLS
@@ -183,7 +178,7 @@ void Renderer::CycleLightingMode()
 			<< "--------\n";
 		break;
 
-	case Renderer::LightingMode::radiance:
+	case Renderer::Settings::LightingMode::radiance:
 		system("CLS");
 		std::cout
 			<< CONTROLS
@@ -192,7 +187,7 @@ void Renderer::CycleLightingMode()
 			<< "--------\n";
 		break;
 
-	case Renderer::LightingMode::BRDF:
+	case Renderer::Settings::LightingMode::BRDF:
 		system("CLS");
 		std::cout
 			<< CONTROLS
@@ -201,7 +196,7 @@ void Renderer::CycleLightingMode()
 			<< "--------\n";
 		break;
 
-	case Renderer::LightingMode::combined:
+	case Renderer::Settings::LightingMode::combined:
 		system("CLS");
 		std::cout
 			<< CONTROLS
@@ -216,12 +211,12 @@ void Renderer::CycleLightingMode()
 
 void Renderer::ToggleShadows()
 {
-	m_CastShadows = !m_CastShadows;
+	m_Settings.m_CastShadows = !m_Settings.m_CastShadows;
 	system("CLS");
 	std::cout
 		<< CONTROLS 
 		<< "--------\n"
-		<< "SHADOWS: " << std::boolalpha << m_CastShadows << std::endl
+		<< "SHADOWS: " << std::boolalpha << m_Settings.m_CastShadows << std::endl
 		<< "--------\n";
 
 	ResetAccumulatedReflectionData();
@@ -229,12 +224,12 @@ void Renderer::ToggleShadows()
 
 void Renderer::ToggleReflections()
 {
-	m_Reflect = !m_Reflect;
+	m_Settings.m_Reflect = !m_Settings.m_Reflect;
 	system("CLS");
 	std::cout
 		<< CONTROLS
 		<< "--------\n"
-		<< "REFLECTIONS: " << std::boolalpha << m_Reflect << std::endl
+		<< "REFLECTIONS: " << std::boolalpha << m_Settings.m_Reflect << std::endl
 		<< "--------\n";
 
 	ResetAccumulatedReflectionData();
@@ -243,12 +238,12 @@ void Renderer::ToggleReflections()
 
 void Renderer::IncrementReflectionBounceAmount(int incrementer)
 {
-	m_ReflectionBounceAmount = std::max(m_ReflectionBounceAmount + incrementer, 1);
+	m_Settings.m_ReflectionBounceAmount = std::max(m_Settings.m_ReflectionBounceAmount + incrementer, 1);
 	system("CLS");
 	std::cout
 		<< CONTROLS
 		<< "--------\n"
-		<< "REFLECTIONS BOUNCE AMOUNT: " << m_ReflectionBounceAmount << std::endl
+		<< "REFLECTIONS BOUNCE AMOUNT: " << m_Settings.m_ReflectionBounceAmount << std::endl
 		<< "--------\n";
 
 	ResetAccumulatedReflectionData();

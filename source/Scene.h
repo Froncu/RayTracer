@@ -2,13 +2,14 @@
 
 #include "Camera.h"
 #include "DataTypes.hpp"
+#include "Renderer.h"
 
 class Material;
 
 class Scene
 {
 public:
-	Scene(const std::string& sceneName, const Camera& camera);
+	Scene(const std::string& sceneName, const Camera& camera = Camera(), const Renderer::Settings& initialRendererSettings = Renderer::Settings());
 	virtual ~Scene();
 
 	Scene(const Scene&) = delete;
@@ -55,6 +56,11 @@ public:
 		return m_vTriangleMeshes;
 	}
 
+	inline const Renderer::Settings& GetInitialRendererSettings() const
+	{
+		return m_InitialRendererSettings;
+	}
+
 protected:
 	unsigned char AddMaterial(Material* pMaterial);
 	Light* const AddLight(const Light& light);
@@ -73,6 +79,8 @@ private:
 	std::vector<Sphere> m_vSpheres;
 	std::vector<Plane> m_vPlanes;
 	std::vector<TriangleMesh> m_vTriangleMeshes;
+
+	const Renderer::Settings m_InitialRendererSettings;
 };
 
 class SceneWeek1 final : public Scene

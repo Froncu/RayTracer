@@ -34,10 +34,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* args[])
 
 	SDL_SetRelativeMouseMode(SDL_bool(true));
 
-	Timer timer{};
-	Renderer renderer{ pWindow };
-
-	Scene* const pScene = 
+	Scene* const pScene =
 		//new SceneWeek1();
 		//new SceneWeek2();
 		//new SceneWeek3();
@@ -45,8 +42,11 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* args[])
 		//new SceneWeek4Bunny();
 		new SceneExtra();
 
+	Renderer renderer{ pWindow, pScene->GetInitialRendererSettings() };
+
 	std::cout << CONTROLS;
 
+	Timer timer{};
 	timer.Start();
 
 	bool

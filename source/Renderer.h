@@ -10,7 +10,38 @@ class Scene;
 class Renderer final
 {
 public:
-	Renderer(SDL_Window* const pWindow);
+	struct Settings
+	{
+		enum class LightingMode
+		{
+			observedArea,
+			radiance,
+			BRDF,
+			combined,
+
+			AMOUNT
+		};
+
+		Settings(LightingMode lightingMode = LightingMode::combined, bool castShadows = true, bool reflect = false, int reflectionBounceAmount = 1) :
+			m_LightingMode{ lightingMode },
+
+			m_CastShadows{ castShadows },
+			m_Reflect{ reflect },
+
+			m_ReflectionBounceAmount{ reflectionBounceAmount }
+		{
+		}
+
+		LightingMode m_LightingMode;
+
+		bool
+			m_CastShadows,
+			m_Reflect;
+
+		int m_ReflectionBounceAmount;
+	};
+
+	Renderer(SDL_Window* const pWindow, const Settings& initialSettings);
 	~Renderer() = default;
 
 	Renderer(const Renderer&) = delete;
@@ -28,7 +59,7 @@ public:
 
 	inline void ResetAccumulatedReflectionData()
 	{
-		if (m_Reflect)
+		if (m_Settings.m_Reflect)
 		{
 			m_vFrameIndices.assign(m_Width * m_Height, 1);
 			m_vAccumulatedReflectionData.assign(m_Width * m_Height, ColorRGB(0.0f, 0.0f, 0.0f));
@@ -44,21 +75,7 @@ private:
 		m_Width,
 		m_Height;
 
-	enum class LightingMode
-	{
-		observedArea,
-		radiance,
-		BRDF,
-		combined,
-
-		AMOUNT
-	} m_LightingMode;
-
-	int m_ReflectionBounceAmount;
-
-	bool
-		m_CastShadows,
-		m_Reflect;
+	Settings m_Settings;
 
 	std::vector<float> m_PixelsX;
 

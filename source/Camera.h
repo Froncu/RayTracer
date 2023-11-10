@@ -9,7 +9,7 @@
 class Camera final
 {
 public:
-	Camera(const Vector3& origin, float fieldOfViewAngle = TO_RADIANS * 45.0f);
+	Camera(const Vector3& origin = Vector3(0.0f, 0.0f, 0.0f), float fieldOfViewAngle = TO_RADIANS * 45.0f);
 
 	inline Matrix CalculateCameraToWorld() const
 	{
