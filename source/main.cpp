@@ -22,7 +22,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* args[])
 		width{ 640 },
 		height{ 480 };
 
-	const std::string title{ "RayTracer - Fratczak Jakub" };
+	const std::string title{ "RayTracer - Jakub Fratczak (2DAE10)" };
 	SDL_Window* pWindow = SDL_CreateWindow(
 		title.c_str(),
 		SDL_WINDOWPOS_UNDEFINED,
@@ -38,11 +38,11 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* args[])
 		//new SceneWeek1();
 		//new SceneWeek2();
 		//new SceneWeek3();
-		//new SceneWeek4();
+		new SceneWeek4();
 		//new SceneWeek4Bunny();
-		new SceneExtra();
+		//new SceneExtra();
 
-	Renderer renderer{ pWindow, pScene->GetInitialRendererSettings() };
+	Renderer renderer{ pWindow, pScene };
 
 	std::cout << CONTROLS;
 
@@ -70,7 +70,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* args[])
 				case SDL_SCANCODE_X:
 					takeScreenshot = true;
 					break;
-
+#ifdef REFLECT
 				case SDL_SCANCODE_UP:
 					renderer.IncrementReflectionBounceAmount(1);
 					break;
@@ -78,11 +78,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* args[])
 				case SDL_SCANCODE_DOWN:
 					renderer.IncrementReflectionBounceAmount(-1);
 					break;
-
-				case SDL_SCANCODE_F1:
-					renderer.ToggleReflections();
-					break;
-
+#endif
 				case SDL_SCANCODE_F2:
 					renderer.ToggleShadows();
 					break;
@@ -99,16 +95,20 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* args[])
 
 			case SDL_MOUSEWHEEL:
 				pScene->GetCamera().IncrementFieldOfViewAngle(-float(event.wheel.y) / 20.0f);
+#ifdef REFLECT
 				renderer.ResetAccumulatedReflectionData();
+#endif
 				break;
 			}
 		}
 
 		pScene->Update(timer);
+#ifdef REFLECT
 		if (pScene->GetCamera().DidMove())
 			renderer.ResetAccumulatedReflectionData();
+#endif
 
-		renderer.Render(pScene);
+		renderer.Render();
 		timer.Update();
 		printTimer += timer.GetElapsed();
 		if (printTimer >= 1.0f)

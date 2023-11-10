@@ -21,9 +21,10 @@ inline bool AreEqual(float a, float b, float epsilon = FLT_EPSILON)
 	return abs(a - b) < epsilon;
 }
 
+//#define SPHERE_HIT_TEST_GEOMETRIC
 inline bool HitTestSphere(const Sphere& sphere, const Ray& ray, HitRecord& hitRecord, bool ignoreHitRecord = false)
 {
-#ifdef SphereHitTestGeometric
+#ifdef SPHERE_HIT_TEST_GEOMETRIC
 	const Vector3 L{ sphere.origin - ray.origin };
 
 	const float
@@ -119,10 +120,10 @@ inline bool HitTestPlane(const Plane& plane, const Ray& ray)
 inline bool SlabTestTriangleMesh(const TriangleMesh& triangleMesh, const Ray& ray)
 {
 	const Vector3
-		smallestAABBTransformed{ triangleMesh.smallestAABBTransformed },
-		largestAABBTransformed{ triangleMesh.largestAABBTransformed },
-		rayOrigin{ ray.origin },
-		rayDirection{ ray.direction };
+		& smallestAABBTransformed{ triangleMesh.smallestAABBTransformed },
+		& largestAABBTransformed{ triangleMesh.largestAABBTransformed },
+		& rayOrigin{ ray.origin },
+		& rayDirection{ ray.direction };
 
 	const float
 		tx1{ (smallestAABBTransformed.x - rayOrigin.x) / rayDirection.x },
@@ -153,7 +154,7 @@ inline bool HitTestTriangle(const Triangle& triangle, const Ray& ray, HitRecord&
 		& normal{ triangle.normal },
 		& rayDirection{ ray.direction };
 
-	const float dotNormalRayDirection{ Vector3::Dot(normal, rayDirection) };
+	const float dotNormalRayDirection{ Vector3::Dot(normal, ignoreHitRecord ? -rayDirection : rayDirection) };
 
 	switch (triangle.cullMode)
 	{
@@ -231,7 +232,7 @@ inline bool HitTestTriangleMesh(const TriangleMesh& triangleMesh, const Ray& ray
 		return false;
 
 	bool didHit{};
-	for (int index{}; index < triangleMesh.vIndices.size(); index += 3)
+	for (size_t index{}; index < triangleMesh.vIndices.size(); index += 3)
 	{
 		if (HitTestTriangle(
 			Triangle(
@@ -248,9 +249,6 @@ inline bool HitTestTriangleMesh(const TriangleMesh& triangleMesh, const Ray& ray
 			didHit = true;
 		}
 	}
-
-	if (didHit)
-		hitRecord.isDynamic = triangleMesh.isDynamic;
 
 	return didHit;
 }

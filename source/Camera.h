@@ -11,17 +11,9 @@ class Camera final
 public:
 	Camera(const Vector3& origin = Vector3(0.0f, 0.0f, 0.0f), float fieldOfViewAngle = TO_RADIANS * 45.0f);
 
-	inline Matrix CalculateCameraToWorld() const
+	inline const Matrix& GetCameraToWorld() const
 	{
-		const Vector3& upDirection{ Vector3::Cross(m_ForwardDirection, m_RightDirection).GetNormalized() };
-
-		return Matrix
-		(
-			m_RightDirection.GetVector4(),
-			upDirection.GetVector4(),
-			m_ForwardDirection.GetVector4(),
-			m_Origin.GetPoint4()
-		);
+		return m_CameraToWorld;
 	}
 
 	void Update(const Timer& timer);
@@ -64,10 +56,27 @@ public:
 	}
 
 private:
+	inline void UpdateCameraToWorld()
+	{
+		static constexpr Vector3 WORLD_UP{ 0.0f, 1.0f, 0.0f };
+		m_ForwardDirection = Matrix(Matrix::CreateRotorX(m_TotalPitch) * Matrix::CreateRotorY(m_TotalYaw)).TransformVector(VECTOR3_UNIT_Z);
+		m_RightDirection = Vector3::Cross(WORLD_UP, m_ForwardDirection).GetNormalized();
+		m_UpDirection = Vector3::Cross(m_ForwardDirection, m_RightDirection).GetNormalized();
+
+		m_CameraToWorld = Matrix
+		(
+			m_RightDirection.GetVector4(),
+			m_UpDirection.GetVector4(),
+			m_ForwardDirection.GetVector4(),
+			m_Origin.GetPoint4()
+		);
+	}
+
 	Vector3
 		m_Origin,
 		m_ForwardDirection,
-		m_RightDirection;
+		m_RightDirection,
+		m_UpDirection;
 
 	float
 		m_FieldOfViewAngle,

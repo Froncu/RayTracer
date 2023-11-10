@@ -65,9 +65,7 @@ public:
 		translator{ IDENTITY },
 		rotor{ IDENTITY },
 		scalar{ IDENTITY },
-		finalTransform{ IDENTITY },
-
-		isDynamic{}
+		finalTransform{ IDENTITY }
 	{
 	}
 
@@ -83,9 +81,7 @@ public:
 		translator{ IDENTITY },
 		rotor{ IDENTITY },
 		scalar{ IDENTITY },
-		finalTransform{ IDENTITY },
-
-		isDynamic{}
+		finalTransform{ IDENTITY }
 	{
 		ParseOBJ(OBJFilePath);
 
@@ -122,13 +118,6 @@ public:
 			vNormalsTransformed[index] = finalTransform.TransformVector(vNormals[index]).GetNormalized();
 
 		UpdateAABBTransformed();
-
-		isDynamic = true;
-	}
-
-	inline void ToggleDynamic()
-	{
-		isDynamic = !isDynamic;
 	}
 
 	inline void SetTranslator(const Vector3& _translator)
@@ -161,8 +150,6 @@ public:
 
 	unsigned char materialIndex;
 	Triangle::CullMode cullMode;
-
-	bool isDynamic;
 
 private:
 	inline bool ParseOBJ(const std::string& OBJFilePath)
@@ -318,6 +305,4 @@ public:
 	bool didHit{};
 
 	unsigned char materialIndex;
-
-	bool isDynamic{};
 };

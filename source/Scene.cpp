@@ -3,7 +3,7 @@
 #include "Utilities.hpp"
 #include "Materials.hpp"
 
-Scene::Scene(const std::string& sceneName, const Camera& camera, const Renderer::Settings& initialRendererSettings) :
+Scene::Scene(const std::string& sceneName, const Camera& camera) :
 	m_SceneName{ sceneName },
 
 	m_Camera{ camera },
@@ -12,9 +12,7 @@ Scene::Scene(const std::string& sceneName, const Camera& camera, const Renderer:
 
 	m_vSpheres{},
 	m_vPlanes{},
-	m_vTriangleMeshes{},
-
-	m_InitialRendererSettings{ initialRendererSettings }
+	m_vTriangleMeshes{}
 {
 	m_vpMaterials.reserve(32);
 	m_vLights.reserve(32);
@@ -279,7 +277,7 @@ void SceneWeek4Bunny::Update(const Timer& timer)
 }
 
 SceneExtra::SceneExtra() :
-	Scene("Extra Scene", Camera(Vector3(0.0f, 2.0f, -12.0f), TO_RADIANS * 70.0f), Renderer::Settings(Renderer::Settings::LightingMode::combined, false, true, 5))
+	Scene("Extra Scene", Camera(Vector3(0.0f, 2.0f, -12.0f), TO_RADIANS * 70.0f))
 {
 	const unsigned char
 		mirror{ AddMaterial(new CookTorrenceMaterial({ 1.0f,  1.0f,  1.0f }, 0.0f, 0.0f)) },
@@ -298,7 +296,6 @@ SceneExtra::SceneExtra() :
 	pTriangleMesh->SetScalar(3.0f);
 	pTriangleMesh->SetRotorY(TO_RADIANS * 45.0f);
 	pTriangleMesh->UpdateTransforms();
-	pTriangleMesh->ToggleDynamic();
 
 	AddLight(Light(Vector3(2.5f, 7.5f, 5.0f), 50.0f, ColorRGB(1.0f, 1.0f, 1.0f)));
 	AddLight(Light(Vector3(-2.5f, 5.0f, 0.0f), 50.0f, ColorRGB(1.0f, 1.0f, 1.0f)));

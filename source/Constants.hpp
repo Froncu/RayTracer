@@ -4,11 +4,13 @@ constexpr char CONTROLS[]
 {
 	"--------\n"
 	"CONTROLS:\n"
-	"F1:	 Toggle Reflections\n"
+	"WASD:	 Move Camera\n"
 	"F2:	 Toggle Shadows\n"
 	"F3:	 Cycle Lighting Modes\n"
 	"F6:      Start Benchmark\n"
+#ifdef REFLECT
 	"UP/DOWN: In-/decrement Reflection Bounces\n"
+#endif
 	"SCROLL:  In-/decrease Field Of View\n"
 	"X:       Take Screenshot\n"
 };
